@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { BottomNav } from '@/components/layout/bottom-nav'
 import type { UserRole } from '@/lib/database.types'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AppLayout({
   children,
 }: {

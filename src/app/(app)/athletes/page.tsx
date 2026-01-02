@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Users, Copy } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
+export const dynamic = 'force-dynamic'
+
 interface Athlete {
   id: string
   name: string
