@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 interface HeaderProps {
   title: string
   showBack?: boolean
+  leftAction?: React.ReactNode
   rightAction?: React.ReactNode
   className?: string
 }
@@ -15,6 +16,7 @@ interface HeaderProps {
 export function Header({
   title,
   showBack = false,
+  leftAction,
   rightAction,
   className,
 }: HeaderProps) {
@@ -28,7 +30,8 @@ export function Header({
       )}
     >
       <div className="flex items-center gap-2">
-        {showBack && (
+        {leftAction && <div className="mr-2">{leftAction}</div>}
+        {!leftAction && showBack && (
           <Button
             variant="ghost"
             size="icon"
