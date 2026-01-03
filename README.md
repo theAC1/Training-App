@@ -75,8 +75,16 @@ UPDATE profiles SET role = 'trainer' WHERE id = 'USER_ID';
 ## Deployment auf Vercel
 
 1. Verbinde das GitHub Repo mit Vercel
-2. Setze die Environment Variables
-3. Deploy
+2. Setze die Environment Variables in den Vercel Projekteinstellungen:
+   - Gehe zu: Projekt Settings → Environment Variables
+   - Füge folgende Variablen hinzu (für alle Environments: Production, Preview, Development):
+     - `NEXT_PUBLIC_SUPABASE_URL` - Deine Supabase Project URL
+     - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Dein Supabase Anon Key
+     - `SUPABASE_SERVICE_ROLE_KEY` - Dein Supabase Service Role Key
+     - `NEXT_PUBLIC_APP_URL` - Deine Vercel App URL (z.B. https://your-app.vercel.app)
+3. Deploy oder Re-deploy das Projekt
+
+**Wichtig**: Ohne diese Environment Variables wird die App mit einem Server-Fehler starten!
 
 ## Projekt-Struktur
 
