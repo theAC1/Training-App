@@ -13,6 +13,144 @@ interface Mesocycle {
   phase: string | null
 }
 
+interface Session {
+  id: string
+  name: string | null
+  week_number: number
+  completed_at: string | null
+}
+
+interface SetLogWithExercise {
+  id: string
+  reps_completed: number
+  weight_used: number | null
+  logged_at: string
+  planned_exercises: {
+    exercise_id: string
+    exercises: {
+      id: string
+      name: string
+    }
+  }
+}
+
+interface SessionWithCompletion {
+  completed_at: string | null
+}
+
+async function getAthleteStats(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
+  // Get all set logs for the athlete
+  const { data: setLogs } = await supabase
+    .from('set_logs')
+    .select(`
+      id,
+      reps_completed,
+      weight_used,
+      logged_at,
+      planned_exercises (
+        exercise_id,
+        exercises (id, name)
+      )
+    `)
+    .eq('athlete_id', userId)
+    .order('logged_at', { ascending: false })
+
+  const typedSetLogs = setLogs as unknown as SetLogWithExercise[]
+
+  // Calculate Personal Bests
+  const pbsByExercise: Record<string, { exerciseName: string; weight: number; reps: number; date: string }> = {}
+
+  for (const log of typedSetLogs || []) {
+    if (!log.weight_used || !log.planned_exercises?.exercises) continue
+    const exerciseId = log.planned_exercises.exercise_id
+    const exerciseName = log.planned_exercises.exercises.name
+    const currentPB = pbsByExercise[exerciseId]
+
+    if (!currentPB || log.weight_used > currentPB.weight) {
+      pbsByExercise[exerciseId] = {
+        exerciseName,
+        weight: log.weight_used,
+        reps: log.reps_completed,
+        date: log.logged_at,
+      }
+    }
+  }
+
+  const personalBests = Object.entries(pbsByExercise).map(([exerciseId, data]) => ({
+    exerciseId,
+    ...data,
+  }))
+
+  // Get completed sessions for streak
+  const { data: completedSessions } = await supabase
+    .from('sessions')
+    .select(`
+      completed_at,
+      mesocycles!inner (athlete_id)
+    `)
+    .eq('mesocycles.athlete_id', userId)
+    .not('completed_at', 'is', null)
+    .order('completed_at', { ascending: false })
+
+  // Calculate streak
+  let streak = 0
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  if (completedSessions && completedSessions.length > 0) {
+    const typedSessions = completedSessions as unknown as SessionWithCompletion[]
+    const completionDates = typedSessions
+      .filter((s) => s.completed_at)
+      .map((s) => {
+        const date = new Date(s.completed_at!)
+        date.setHours(0, 0, 0, 0)
+        return date.getTime()
+      })
+      .filter((date, index, self) => self.indexOf(date) === index)
+      .sort((a, b) => b - a)
+
+    const todayTime = today.getTime()
+    const yesterdayTime = todayTime - 24 * 60 * 60 * 1000
+
+    if (completionDates.includes(todayTime)) {
+      streak = 1
+      let checkDate = yesterdayTime
+      for (const date of completionDates.slice(1)) {
+        if (date === checkDate) {
+          streak++
+          checkDate -= 24 * 60 * 60 * 1000
+        } else if (date < checkDate) {
+          break
+        }
+      }
+    } else if (completionDates.includes(yesterdayTime)) {
+      streak = 1
+      let checkDate = yesterdayTime - 24 * 60 * 60 * 1000
+      for (const date of completionDates.slice(1)) {
+        if (date === checkDate) {
+          streak++
+          checkDate -= 24 * 60 * 60 * 1000
+        } else if (date < checkDate) {
+          break
+        }
+      }
+    }
+  }
+
+  // Recent PBs
+  const oneWeekAgo = new Date()
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+  const recentPBs = personalBests.filter((pb) => new Date(pb.date) >= oneWeekAgo)
+
+  return {
+    personalBests: personalBests.slice(0, 5),
+    recentPBs,
+    streak,
+    totalWorkouts: completedSessions?.length || 0,
+    totalPBs: personalBests.length,
+  }
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const {
@@ -36,6 +174,8 @@ export default async function DashboardPage() {
   let athleteCount = 0
   let activeMesocycleCount = 0
   let athleteMesocycles: Mesocycle[] = []
+  let nextSessions: Session[] = []
+  let stats = { personalBests: [] as { exerciseName: string; weight: number; reps: number }[], streak: 0, totalPBs: 0, totalWorkouts: 0, recentPBs: [] as { exerciseName: string }[] }
 
   if (isTrainer) {
     // Get athlete count
@@ -62,6 +202,23 @@ export default async function DashboardPage() {
       .limit(3)
 
     athleteMesocycles = (mesocycles as Mesocycle[]) || []
+
+    // Get next uncompleted sessions
+    if (athleteMesocycles.length > 0) {
+      const { data: sessions } = await supabase
+        .from('sessions')
+        .select('id, name, week_number, completed_at, mesocycle_id')
+        .in('mesocycle_id', athleteMesocycles.map(m => m.id))
+        .is('completed_at', null)
+        .order('week_number', { ascending: true })
+        .order('order_index', { ascending: true })
+        .limit(3)
+
+      nextSessions = (sessions as Session[]) || []
+    }
+
+    // Get stats
+    stats = await getAthleteStats(supabase, user.id)
   }
 
   return (
@@ -81,41 +238,69 @@ export default async function DashboardPage() {
 
         {!isTrainer && (
           <>
-            {/* Streak Card */}
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                <div className="rounded-full bg-primary/10 p-3">
-                  <Flame className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-base">Streak</CardTitle>
-                  <p className="text-2xl font-bold">0 Tage</p>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Starte dein erstes Training!
-                </p>
-              </CardContent>
-            </Card>
+            {/* Stats Row */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Streak Card */}
+              <Card>
+                <CardHeader className="flex flex-row items-center gap-3 p-4">
+                  <div className="rounded-full bg-primary/10 p-2">
+                    <Flame className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-sm font-medium">Streak</CardTitle>
+                    <p className="text-2xl font-bold">{stats.streak}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {stats.streak === 1 ? 'Tag' : 'Tage'}
+                    </p>
+                  </div>
+                </CardHeader>
+              </Card>
 
-            {/* PBs Card */}
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                <div className="rounded-full bg-warning/10 p-3">
-                  <Trophy className="h-6 w-6 text-warning" />
-                </div>
-                <div>
-                  <CardTitle className="text-base">Personal Bests</CardTitle>
-                  <p className="text-2xl font-bold">0 PBs</p>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Deine Bestleistungen erscheinen hier
-                </p>
-              </CardContent>
-            </Card>
+              {/* PBs Card */}
+              <Card>
+                <CardHeader className="flex flex-row items-center gap-3 p-4">
+                  <div className="rounded-full bg-warning/10 p-2">
+                    <Trophy className="h-5 w-5 text-warning" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-sm font-medium">PBs</CardTitle>
+                    <p className="text-2xl font-bold">{stats.totalPBs}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {stats.recentPBs.length > 0
+                        ? `+${stats.recentPBs.length} diese Woche`
+                        : 'Personal Bests'}
+                    </p>
+                  </div>
+                </CardHeader>
+              </Card>
+            </div>
+
+            {/* Recent PBs */}
+            {stats.personalBests.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-warning" />
+                    Deine Bestleistungen
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {stats.personalBests.map((pb, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <span className="text-muted-foreground">{pb.exerciseName}</span>
+                        <span className="font-medium">
+                          {pb.weight}kg x {pb.reps}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Assigned Mesocycles */}
             <Card>
@@ -163,7 +348,7 @@ export default async function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Next Session Card */}
+            {/* Next Sessions Card */}
             <Card>
               <CardHeader className="flex flex-row items-center gap-4 pb-2">
                 <div className="rounded-full bg-accent p-3">
@@ -174,18 +359,30 @@ export default async function DashboardPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {athleteMesocycles.length > 0
-                    ? 'Wähle eine Session aus deinem Trainingsplan.'
-                    : 'Noch kein Training geplant.'}
-                </p>
-                {athleteMesocycles.length > 0 && (
-                  <Button asChild className="mt-3 w-full">
-                    <Link href="/session">
-                      Training starten
-                      <ChevronRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
+                {nextSessions.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    {athleteMesocycles.length > 0
+                      ? 'Alle Sessions abgeschlossen!'
+                      : 'Noch kein Training geplant.'}
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {nextSessions.map((session) => (
+                      <Button
+                        key={session.id}
+                        asChild
+                        variant="outline"
+                        className="w-full justify-between"
+                      >
+                        <Link href={`/session/${session.id}`}>
+                          <span>
+                            {session.name || `Woche ${session.week_number}`}
+                          </span>
+                          <ChevronRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    ))}
+                  </div>
                 )}
               </CardContent>
             </Card>

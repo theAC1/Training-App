@@ -44,21 +44,34 @@ export default function LoginPage() {
       })
 
       if (error) {
+        let description = error.message
+        if (error.message === 'Invalid login credentials') {
+          description = 'E-Mail oder Passwort ist falsch'
+        }
         toast({
           variant: 'destructive',
           title: 'Fehler beim Login',
-          description: error.message,
+          description,
         })
         return
       }
 
       router.push('/dashboard')
       router.refresh()
-    } catch {
+    } catch (err) {
+      let description = 'Ein unerwarteter Fehler ist aufgetreten'
+      if (err instanceof Error) {
+        if (err.message === 'Failed to fetch') {
+          description =
+            'Verbindung zum Server fehlgeschlagen. Bitte prüfe deine Internetverbindung.'
+        } else {
+          description = err.message
+        }
+      }
       toast({
         variant: 'destructive',
-        title: 'Fehler',
-        description: 'Ein unerwarteter Fehler ist aufgetreten',
+        title: 'Fehler beim Login',
+        description,
       })
     } finally {
       setIsLoading(false)

@@ -36,23 +36,32 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
+  // Use getSession() for quick cookie-based check (no network call)
+  // This is faster than getUser() which makes a network request
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    data: { session },
+  } = await supabase.auth.getSession()
 
   const isAuthRoute =
     request.nextUrl.pathname.startsWith('/login') ||
     request.nextUrl.pathname.startsWith('/signup')
 
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api')
+
+  // Skip auth redirects for API routes - they handle their own auth
+  if (isApiRoute) {
+    return supabaseResponse
+  }
+
   // Redirect unauthenticated users to login
-  if (!user && !isAuthRoute && request.nextUrl.pathname !== '/') {
+  if (!session && !isAuthRoute && request.nextUrl.pathname !== '/') {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
   // Redirect authenticated users away from auth pages
-  if (user && isAuthRoute) {
+  if (session && isAuthRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)

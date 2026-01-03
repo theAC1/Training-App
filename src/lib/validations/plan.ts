@@ -104,3 +104,22 @@ export const statusLabels: Record<string, string> = {
   active: 'Aktiv',
   completed: 'Abgeschlossen',
 }
+
+// Set Log Schemas
+export const setLogCreateSchema = z.object({
+  planned_exercise_id: z.string().uuid('Ungültige Übungs-ID'),
+  set_number: z.number().int().min(1).max(50),
+  reps_completed: z.number().int().min(0).max(200),
+  weight_used: z.number().min(0).max(2000).nullable().optional(),
+  pain_flag: z.boolean().default(false),
+  notes: z.string().max(500).nullable().optional(),
+  client_uuid: z.string().uuid('Ungültige Client-UUID'),
+  logged_at: z.string().datetime().optional(),
+})
+
+export const setLogUpdateSchema = setLogCreateSchema.partial().extend({
+  id: z.string().uuid(),
+})
+
+export type SetLogCreateInput = z.infer<typeof setLogCreateSchema>
+export type SetLogUpdateInput = z.infer<typeof setLogUpdateSchema>
