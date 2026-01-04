@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { AppShell } from '@/components/layout/app-shell'
 import type { UserRole } from '@/lib/database.types'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AppLayout({
   children,
 }: {

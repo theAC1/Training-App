@@ -6,6 +6,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Plus, Calendar } from 'lucide-react'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 interface Mesocycle {
   id: string
   name: string
