@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { BottomNav } from '@/components/layout/bottom-nav'
+import { AppShell } from '@/components/layout/app-shell'
 import type { UserRole } from '@/lib/database.types'
 
 export default async function AppLayout({
@@ -26,10 +26,5 @@ export default async function AppLayout({
 
   const userRole: UserRole = profile?.role || 'athlete'
 
-  return (
-    <div className="flex min-h-screen flex-col pb-20">
-      <main className="flex-1">{children}</main>
-      <BottomNav userRole={userRole} />
-    </div>
-  )
+  return <AppShell userRole={userRole}>{children}</AppShell>
 }

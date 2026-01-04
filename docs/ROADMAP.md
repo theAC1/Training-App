@@ -4,11 +4,11 @@
 
 | Milestone | Name | Beschreibung | Status |
 |-----------|------|--------------|--------|
-| 1 | Foundation | Stack, Auth, Layout, Routing | 🔄 In Progress |
-| 2 | Übungsdatenbank | CRUD, Varianten, Bild-Upload | ⏳ Pending |
-| 3 | Plan Builder | Meso, Sessions, Blocks | ⏳ Pending |
+| 1 | Foundation | Stack, Auth, Layout, Routing | ✅ Completed |
+| 2 | Übungsdatenbank | CRUD, Varianten, Bild-Upload | ✅ Completed |
+| 3 | Plan Builder | Meso, Sessions, Blocks | ✅ Completed |
 | 4 | Athlet Execution | Logging, Auto-Save, Historie | ⏳ Pending |
-| 5 | Offline PWA Sync | Service Worker, IndexedDB, Sync | ⏳ Pending |
+| 5 | Offline PWA Sync | Service Worker, IndexedDB, Sync | ✅ Completed |
 | 6 | Polish & Deploy | Performance, A11y, Final QA | ⏳ Pending |
 
 ---
@@ -134,18 +134,18 @@
 
 ### Tasks
 
-- [ ] Service Worker Setup (next-pwa)
-- [ ] App Shell Caching
-- [ ] Session-Daten in IndexedDB cachen
-- [ ] Set-Logs lokal speichern
-- [ ] Sync-Queue implementieren
-- [ ] Online/Offline Detection
-- [ ] Sync bei Reconnect
-- [ ] Pending-Counter UI
-- [ ] client_uuid Generierung
-- [ ] Deduplizierung am Server
-- [ ] Retry mit Backoff
-- [ ] Konflikt-Handling (append-only)
+- [x] Service Worker Setup (next-pwa)
+- [x] App Shell Caching
+- [x] Session-Daten in IndexedDB cachen
+- [x] Set-Logs lokal speichern
+- [x] Sync-Queue implementieren
+- [x] Online/Offline Detection
+- [x] Sync bei Reconnect
+- [x] Pending-Counter UI
+- [x] client_uuid Generierung
+- [x] Deduplizierung am Server
+- [x] Retry mit Backoff
+- [x] Konflikt-Handling (append-only)
 
 ### Akzeptanzkriterien
 
