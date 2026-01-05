@@ -116,7 +116,7 @@ export interface Database {
         Row: {
           id: string
           name: string
-          parent_exercise_id: string | null
+          grundform: string | null
           image_url: string
           video_url: string | null
           categories: string[]
@@ -131,7 +131,7 @@ export interface Database {
         Insert: {
           id?: string
           name: string
-          parent_exercise_id?: string | null
+          grundform?: string | null
           image_url: string
           video_url?: string | null
           categories?: string[]
@@ -146,7 +146,7 @@ export interface Database {
         Update: {
           id?: string
           name?: string
-          parent_exercise_id?: string | null
+          grundform?: string | null
           image_url?: string
           video_url?: string | null
           categories?: string[]
