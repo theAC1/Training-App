@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import type { OfflineSetLog, SyncStatus } from '@/lib/indexeddb'
 
 interface SyncQueueState {
   pendingCount: number

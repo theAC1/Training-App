@@ -5,7 +5,8 @@ import { useParams, useRouter } from 'next/navigation'
 import { Header } from '@/components/layout/header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { FloatingCard } from '@/components/ui/FloatingCard'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useToast } from '@/hooks/use-toast'
 import { useSetLogger } from '@/hooks/use-set-logger'
@@ -424,36 +425,36 @@ export default function SessionExecutionPage() {
 
         {/* Rest Timer Overlay */}
         {isResting && (
-          <Card className="border-primary bg-primary/5">
+          <FloatingCard className="border-primary bg-primary/5 fixed bottom-24 left-4 right-4 z-40 shadow-2xl backdrop-blur-md">
             <CardContent className="py-6">
               <div className="flex flex-col items-center space-y-4">
-                <Timer className="h-8 w-8 text-primary" />
-                <div className="text-4xl font-bold tabular-nums">
+                <Timer className="h-8 w-8 text-primary animate-pulse" />
+                <div className="text-5xl font-bold tabular-nums tracking-wider text-primary">
                   {formatTime(restTimeRemaining)}
                 </div>
-                <p className="text-sm text-muted-foreground">Pause</p>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => addTime(-15)}>
-                    -15s
+                <p className="text-sm text-muted-foreground font-medium uppercase tracking-widest">Pause</p>
+                <div className="grid grid-cols-4 gap-2 w-full">
+                  <Button variant="outline" size="sm" onClick={() => addTime(-15)} className="h-12 text-lg font-bold">
+                    -15
                   </Button>
-                  <Button variant="outline" size="icon" onClick={togglePause}>
-                    {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+                  <Button variant="outline" size="icon" onClick={togglePause} className="h-12 w-full">
+                    {isPaused ? <Play className="h-5 w-5" /> : <Pause className="h-5 w-5" />}
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => addTime(15)}>
-                    +15s
+                  <Button variant="outline" size="sm" onClick={() => addTime(15)} className="h-12 text-lg font-bold">
+                    +15
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={skipRest}>
-                    Überspringen
+                  <Button variant="ghost" size="sm" onClick={skipRest} className="h-12 text-muted-foreground hover:text-foreground">
+                    Skip
                   </Button>
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </FloatingCard>
         )}
 
         {/* Current Exercise Card */}
         {currentExercise && currentBlock && (
-          <Card>
+          <FloatingCard className="pb-4">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -521,9 +522,8 @@ export default function SessionExecutionPage() {
                     {exerciseLogs.map((log) => (
                       <div
                         key={log.clientUuid}
-                        className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm ${
-                          log.painFlag ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                        }`}
+                        className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm ${log.painFlag ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                          }`}
                       >
                         <CheckCircle2 className="h-3 w-3" />
                         <span>
@@ -550,7 +550,7 @@ export default function SessionExecutionPage() {
                         placeholder={currentExercise.reps_target}
                         value={repsInput}
                         onChange={(e) => setRepsInput(e.target.value)}
-                        className="text-lg"
+                        className="text-2xl h-16 text-center font-bold"
                       />
                     </div>
                     <div className="space-y-1">
@@ -561,7 +561,7 @@ export default function SessionExecutionPage() {
                         placeholder={currentExercise.weight_prescribed?.toString() || '-'}
                         value={weightInput}
                         onChange={(e) => setWeightInput(e.target.value)}
-                        className="text-lg"
+                        className="text-2xl h-16 text-center font-bold"
                       />
                     </div>
                   </div>
@@ -580,7 +580,8 @@ export default function SessionExecutionPage() {
                     </label>
                   </div>
                   <Button
-                    className="w-full"
+                    className="w-full h-14 text-lg font-bold shadow-lg"
+                    size="lg"
                     onClick={handleLogSet}
                     disabled={isLoggingSet || !repsInput}
                   >
@@ -596,19 +597,19 @@ export default function SessionExecutionPage() {
 
               {/* All sets complete for this exercise */}
               {allSetsComplete && !isResting && (
-                <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-center">
-                  <CheckCircle2 className="mx-auto mb-2 h-8 w-8 text-green-600" />
-                  <p className="font-medium text-green-700">Alle Sätze abgeschlossen!</p>
+                <div className="rounded-2xl border border-green-200 bg-green-50/50 p-6 text-center backdrop-blur-sm">
+                  <CheckCircle2 className="mx-auto mb-2 h-10 w-10 text-green-600 animate-bounce" />
+                  <p className="font-bold text-lg text-green-700">Alle Sätze abgeschlossen!</p>
                   {!isLastExercise && (
-                    <Button className="mt-3" onClick={goToNextExercise}>
+                    <Button className="mt-4 w-full h-14 text-lg shadow-lg" onClick={goToNextExercise}>
                       Nächste Übung
-                      <ChevronRight className="ml-1 h-4 w-4" />
+                      <ChevronRight className="ml-2 h-5 w-5" />
                     </Button>
                   )}
                 </div>
               )}
             </CardContent>
-          </Card>
+          </FloatingCard>
         )}
 
         {/* Navigation */}
@@ -641,14 +642,14 @@ export default function SessionExecutionPage() {
 
         {/* Session Notes */}
         {session.notes && (
-          <Card>
+          <FloatingCard>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Trainer-Notizen</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">{session.notes}</p>
             </CardContent>
-          </Card>
+          </FloatingCard>
         )}
       </div>
     </>

@@ -31,9 +31,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = plannedExerciseCreateSchema.parse(body)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: plannedExercise, error } = await (supabase
-      .from('planned_exercises') as any)
+      .from('planned_exercises') as any) // eslint-disable-line @typescript-eslint/no-explicit-any
       .insert(validatedData)
       .select(`
         *,

@@ -54,29 +54,37 @@ export function BottomNav({ userRole }: BottomNavProps) {
   )
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background safe-area-bottom">
-      <div className="flex items-center justify-around">
-        {filteredItems.map((item) => {
-          const isActive =
-            pathname === item.href || pathname.startsWith(`${item.href}/`)
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1 px-2 py-2 text-xs transition-colors',
-                isActive
-                  ? 'text-primary'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </Link>
-          )
-        })}
-      </div>
-    </nav>
+    <div className="fixed bottom-6 left-4 right-4 z-50">
+      <nav className="mx-auto max-w-md rounded-2xl border border-white/10 bg-card/80 p-2 shadow-floating backdrop-blur-lg dark:bg-card/90 safe-area-bottom">
+        <ul className="flex items-center justify-around">
+          {filteredItems.map((item) => {
+            const isActive =
+              pathname === item.href || pathname.startsWith(`${item.href}/`)
+
+            // Highlight specific items? For now we keep it consistent
+
+            return (
+              <li key={item.href} className="flex-1">
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1 p-2 text-xs font-medium transition-colors hover:text-primary rounded-xl",
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  )}
+                >
+                  <div className={cn("transition-transform duration-200", isActive && "scale-110 -translate-y-1")}>
+                    {item.icon}
+                  </div>
+                  <span className={cn("transition-opacity", isActive ? "opacity-100 font-semibold" : "opacity-70")}>
+                    {item.label}
+                  </span>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      </nav>
+    </div>
   )
 }

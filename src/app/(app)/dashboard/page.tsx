@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/layout/header'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardHeader, CardTitle } from '@/components/ui/card'
+import { FloatingCard } from '@/components/ui/FloatingCard'
 import { Button } from '@/components/ui/button'
-import { Dumbbell, Flame, Trophy, Calendar, ChevronRight } from 'lucide-react'
+import { Dumbbell, Flame, Trophy, Calendar, ChevronRight, ListTodo, Users } from 'lucide-react'
 import Link from 'next/link'
 
 interface Mesocycle {
@@ -67,130 +68,111 @@ export default async function DashboardPage() {
   }
 
   return (
+
     <>
       <Header title="Dashboard" />
-      <div className="space-y-4 p-4">
-        <div>
-          <h2 className="text-2xl font-bold">
-            {greeting}, {profile?.name || 'Athlet'}!
-          </h2>
-          <p className="text-muted-foreground">
-            {isTrainer
-              ? 'Verwalte deine Athleten und Trainingspläne'
-              : 'Bereit für dein Training?'}
-          </p>
+      <div className="space-y-4 p-4 pb-24">
+        {/* Greeting Section */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/20 to-secondary/30 p-6 shadow-floating">
+          <div className="relative z-10">
+            <h2 className="text-3xl font-bold tracking-tight">
+              {greeting}, <br />
+              <span className="text-primary">{profile?.name || 'Athlet'}!</span>
+            </h2>
+            <p className="mt-2 text-muted-foreground font-medium">
+              {isTrainer
+                ? 'Verwalte deine Athleten und Trainingspläne'
+                : 'Bereit für dein Training?'}
+            </p>
+          </div>
+          {/* Decorative Background Element */}
+          <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
         </div>
 
         {!isTrainer && (
           <>
-            {/* Streak Card */}
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                <div className="rounded-full bg-primary/10 p-3">
+            {/* Quick Actions Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Streak Card */}
+              <FloatingCard className="flex flex-col items-center justify-center text-center">
+                <div className="mb-2 rounded-full bg-primary/10 p-3 shadow-sm">
                   <Flame className="h-6 w-6 text-primary" />
                 </div>
-                <div>
-                  <CardTitle className="text-base">Streak</CardTitle>
-                  <p className="text-2xl font-bold">0 Tage</p>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Starte dein erstes Training!
-                </p>
-              </CardContent>
-            </Card>
+                <p className="text-2xl font-bold">0</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Streak</p>
+              </FloatingCard>
 
-            {/* PBs Card */}
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                <div className="rounded-full bg-warning/10 p-3">
+              {/* PBs Card */}
+              <FloatingCard className="flex flex-col items-center justify-center text-center">
+                <div className="mb-2 rounded-full bg-warning/10 p-3 shadow-sm">
                   <Trophy className="h-6 w-6 text-warning" />
                 </div>
-                <div>
-                  <CardTitle className="text-base">Personal Bests</CardTitle>
-                  <p className="text-2xl font-bold">0 PBs</p>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Deine Bestleistungen erscheinen hier
-                </p>
-              </CardContent>
-            </Card>
+                <p className="text-2xl font-bold">0</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">PBs</p>
+              </FloatingCard>
+            </div>
 
-            {/* Assigned Mesocycles */}
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                <div className="rounded-full bg-accent p-3">
-                  <Calendar className="h-6 w-6" />
-                </div>
-                <div className="flex-1">
-                  <CardTitle className="text-base">Meine Trainingspläne</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {athleteMesocycles.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Noch keine Trainingspläne zugewiesen. Dein Trainer wird bald
-                    einen Plan erstellen.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {athleteMesocycles.map((meso) => (
-                      <div
-                        key={meso.id}
-                        className="flex items-center justify-between rounded-lg bg-muted/50 p-3"
-                      >
-                        <div>
-                          <p className="font-medium">{meso.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {meso.duration_weeks} Wochen
-                            {meso.phase && ` • ${meso.phase}`}
-                          </p>
-                        </div>
-                        <span
-                          className={`rounded-full px-2 py-1 text-xs ${
-                            meso.status === 'active'
-                              ? 'bg-success/10 text-success'
-                              : 'bg-warning/10 text-warning'
-                          }`}
-                        >
-                          {meso.status === 'active' ? 'Aktiv' : 'Entwurf'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Next Session Card */}
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                <div className="rounded-full bg-accent p-3">
+            {/* Next Session Card (Prominent) */}
+            <FloatingCard gradient className="relative overflow-hidden border-primary/20">
+              <div className="flex items-center gap-4">
+                <div className="rounded-2xl bg-primary p-4 shadow-lg text-primary-foreground">
                   <Dumbbell className="h-6 w-6" />
                 </div>
                 <div>
-                  <CardTitle className="text-base">Nächstes Training</CardTitle>
+                  <h3 className="font-bold text-lg">Nächstes Training</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {athleteMesocycles.length > 0 ? 'Weiter geht\'s!' : 'Starte jetzt'}
+                  </p>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {athleteMesocycles.length > 0
-                    ? 'Wähle eine Session aus deinem Trainingsplan.'
-                    : 'Noch kein Training geplant.'}
+              </div>
+
+              {athleteMesocycles.length > 0 ? (
+                <Button asChild className="mt-6 w-full shadow-lg" size="lg">
+                  <Link href="/session">
+                    Training starten
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              ) : (
+                <p className="mt-4 text-sm text-muted-foreground bg-background/50 p-3 rounded-lg border border-border/50">
+                  Noch kein Training geplant. Warte auf deinen Trainer.
                 </p>
-                {athleteMesocycles.length > 0 && (
-                  <Button asChild className="mt-3 w-full">
-                    <Link href="/session">
-                      Training starten
-                      <ChevronRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
+              )}
+            </FloatingCard>
+
+            {/* Assigned Mesocycles */}
+            <div className="space-y-3">
+              <h3 className="px-1 text-lg font-semibold">Deine Pläne</h3>
+              {athleteMesocycles.length === 0 ? (
+                <FloatingCard>
+                  <div className="flex flex-col items-center text-center gap-2">
+                    <Calendar className="h-10 w-10 text-muted-foreground/50" />
+                    <p className="text-muted-foreground">Keine aktiven Pläne</p>
+                  </div>
+                </FloatingCard>
+              ) : (
+                athleteMesocycles.map((meso) => (
+                  <FloatingCard key={meso.id} className="p-4 flex items-center justify-between hover:bg-accent/50 cursor-pointer transition-colors group">
+                    <div>
+                      <p className="font-bold group-hover:text-primary transition-colors">{meso.name}</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                        <span>{meso.duration_weeks} Wochen</span>
+                        {meso.phase && <span className="w-1 h-1 rounded-full bg-muted-foreground" />}
+                        {meso.phase && <span>{meso.phase}</span>}
+                      </div>
+                    </div>
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium border ${meso.status === 'active'
+                        ? 'bg-success/10 text-success border-success/20'
+                        : 'bg-warning/10 text-warning border-warning/20'
+                        }`}
+                    >
+                      {meso.status === 'active' ? 'Aktiv' : 'Entwurf'}
+                    </span>
+                  </FloatingCard>
+                ))
+              )}
+            </div>
           </>
         )}
 
@@ -198,57 +180,48 @@ export default async function DashboardPage() {
           <>
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-4">
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center p-6">
-                  <p className="text-3xl font-bold">{athleteCount}</p>
-                  <p className="text-sm text-muted-foreground">Athleten</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center p-6">
-                  <p className="text-3xl font-bold">{activeMesocycleCount}</p>
-                  <p className="text-sm text-muted-foreground">Aktive Pläne</p>
-                </CardContent>
-              </Card>
+              <FloatingCard className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-card to-primary/5">
+                <p className="text-4xl font-bold text-foreground">{athleteCount}</p>
+                <p className="text-sm text-muted-foreground uppercase tracking-wide font-medium mt-1">Athleten</p>
+              </FloatingCard>
+              <FloatingCard className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-card to-primary/5">
+                <p className="text-4xl font-bold text-foreground">{activeMesocycleCount}</p>
+                <p className="text-sm text-muted-foreground uppercase tracking-wide font-medium mt-1">Aktive Pläne</p>
+              </FloatingCard>
             </div>
 
             {/* Quick Actions */}
-            <Card>
-              <CardHeader>
+            <FloatingCard>
+              <CardHeader className="p-0 mb-4">
                 <CardTitle>Schnellzugriff</CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-2">
-                <Button asChild variant="outline">
-                  <Link href="/plan/new">Neuer Plan</Link>
+              <div className="grid grid-cols-2 gap-3">
+                <Button asChild variant="outline" className="h-auto py-4 flex flex-col gap-2 hover:border-primary/50 hover:bg-primary/5">
+                  <Link href="/plan/new">
+                    <ListTodo className="h-6 w-6 mb-1" />
+                    Neuer Plan
+                  </Link>
                 </Button>
-                <Button asChild variant="outline">
-                  <Link href="/athletes">Athleten</Link>
+                <Button asChild variant="outline" className="h-auto py-4 flex flex-col gap-2 hover:border-primary/50 hover:bg-primary/5">
+                  <Link href="/athletes">
+                    <Users className="h-6 w-6 mb-1" />
+                    Athleten
+                  </Link>
                 </Button>
-                <Button asChild variant="outline">
-                  <Link href="/exercises">Übungen</Link>
+                <Button asChild variant="outline" className="h-auto py-4 flex flex-col gap-2 hover:border-primary/50 hover:bg-primary/5">
+                  <Link href="/exercises">
+                    <Dumbbell className="h-6 w-6 mb-1" />
+                    Übungen
+                  </Link>
                 </Button>
-                <Button asChild variant="outline">
-                  <Link href="/plan">Alle Pläne</Link>
+                <Button asChild variant="outline" className="h-auto py-4 flex flex-col gap-2 hover:border-primary/50 hover:bg-primary/5">
+                  <Link href="/plan">
+                    <Calendar className="h-6 w-6 mb-1" />
+                    Alle Pläne
+                  </Link>
                 </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Erste Schritte</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  1. Erstelle Übungen unter &quot;Übungen&quot;
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  2. Lade Athleten ein unter &quot;Athleten&quot;
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  3. Erstelle Trainingspläne unter &quot;Planung&quot;
-                </p>
-              </CardContent>
-            </Card>
+              </div>
+            </FloatingCard>
           </>
         )}
       </div>

@@ -78,8 +78,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     // Athletes can only update started_at and completed_at
     if (!isTrainer) {
       // Check if athlete is updating their own session
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: sessionCheck } = await (supabase as any)
+      const { data: sessionCheck } = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
         .from('sessions')
         .select('id, mesocycles!inner(athlete_id)')
         .eq('id', id)
@@ -88,8 +87,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       const mesoData = sessionCheck?.mesocycles
       if (!sessionCheck || mesoData?.athlete_id !== user.id) {
         // Also check athletes table
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: athleteCheck } = await (supabase as any)
+        const { data: athleteCheck } = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
           .from('athletes')
           .select('id')
           .eq('user_id', user.id)
@@ -120,9 +118,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         )
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: session, error } = await (supabase
-        .from('sessions') as any)
+        .from('sessions') as any) // eslint-disable-line @typescript-eslint/no-explicit-any
         .update(filteredBody)
         .eq('id', id)
         .select('*')
@@ -139,9 +136,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const validatedData = sessionUpdateSchema.parse({ ...body, id })
     const { id: _, ...updateData } = validatedData
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: session, error } = await (supabase
-      .from('sessions') as any)
+      .from('sessions') as any) // eslint-disable-line @typescript-eslint/no-explicit-any
       .update(updateData)
       .eq('id', id)
       .select('*')

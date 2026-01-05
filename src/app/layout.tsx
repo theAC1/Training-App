@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from 'next'
+import { Inter } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/toaster'
+
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Training App',
@@ -29,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de" suppressHydrationWarning>
-      <body className="min-h-screen bg-background antialiased">
+      <body className={`${inter.className} min-h-screen bg-background antialiased selection:bg-primary/20`}>
         <ThemeProvider defaultTheme="dark" storageKey="training-app-theme">
           {children}
           <Toaster />

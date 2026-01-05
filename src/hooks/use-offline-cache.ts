@@ -20,8 +20,6 @@ export function useOfflineCache() {
     exercises,
     isLoading,
     setSession,
-    setSessions,
-    setExercise,
     setExercises,
     setIsLoading,
     getSession,

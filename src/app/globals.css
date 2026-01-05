@@ -1,66 +1,80 @@
 @import 'tailwindcss';
 
-/* CSS Custom Properties for Dark Mode */
 :root {
-  /* Colors - Light Mode */
-  --background: 0 0% 100%;
-  --foreground: 0 0% 3.9%;
+  /* Colors - Light Mode (Energetic & Fresh) */
+  --background: 210 40% 98%;
+  /* Very light blue-ish white */
+  --foreground: 222 47% 11%;
+  /* Deep navy blue, close to black */
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 3.9%;
+  --card-foreground: 222 47% 11%;
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 3.9%;
-  --primary: 142.1 76.2% 36.3%;
-  --primary-foreground: 355.7 100% 97.3%;
-  --secondary: 0 0% 96.1%;
-  --secondary-foreground: 0 0% 9%;
-  --muted: 0 0% 96.1%;
-  --muted-foreground: 0 0% 45.1%;
-  --accent: 0 0% 96.1%;
-  --accent-foreground: 0 0% 9%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 221 83% 53%;
+  /* Electric Blue */
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222 47% 11%;
   --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 89.8%;
-  --input: 0 0% 89.8%;
-  --ring: 142.1 76.2% 36.3%;
-  --radius: 0.75rem;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 221 83% 53%;
+  --radius: 1rem;
+  /* More rounded for floating effect */
+
+  /* Floating Effect Shadows (Light) */
+  --shadow-floating: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-floating-hover: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 
   /* Success colors */
-  --success: 142.1 76.2% 36.3%;
-  --success-foreground: 355.7 100% 97.3%;
+  --success: 142 70% 45%;
+  --success-foreground: 0 0% 100%;
 
   /* Warning colors */
-  --warning: 38 92% 50%;
-  --warning-foreground: 0 0% 9%;
+  --warning: 48 96% 53%;
+  --warning-foreground: 48 96% 10%;
 }
 
 .dark {
-  /* Colors - Dark Mode (Default for App) */
-  --background: 0 0% 7%;
-  --foreground: 0 0% 95%;
-  --card: 0 0% 10%;
-  --card-foreground: 0 0% 95%;
-  --popover: 0 0% 10%;
-  --popover-foreground: 0 0% 95%;
-  --primary: 142.1 70.6% 45.3%;
-  --primary-foreground: 144.9 80.4% 10%;
-  --secondary: 0 0% 17%;
-  --secondary-foreground: 0 0% 95%;
-  --muted: 0 0% 17%;
-  --muted-foreground: 0 0% 60%;
-  --accent: 0 0% 17%;
-  --accent-foreground: 0 0% 95%;
-  --destructive: 0 62.8% 50.6%;
-  --destructive-foreground: 0 0% 95%;
-  --border: 0 0% 20%;
-  --input: 0 0% 20%;
-  --ring: 142.1 70.6% 45.3%;
+  /* Colors - Dark Mode (Sleek & Deep) */
+  --background: 240 10% 3.9%;
+  /* Rich dark gray, almost black */
+  --foreground: 0 0% 98%;
+  --card: 240 10% 7%;
+  /* Slightly lighter than background */
+  --card-foreground: 0 0% 98%;
+  --popover: 240 10% 7%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 217 91% 60%;
+  /* Slightly brighter blue for dark mode visibility */
+  --primary-foreground: 222 47% 11%;
+  --secondary: 240 4% 16%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 240 4% 16%;
+  --muted-foreground: 240 5% 65%;
+  --accent: 240 4% 16%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 4% 16%;
+  --input: 240 4% 16%;
+  --ring: 217 91% 60%;
+
+  /* Floating Effect Shadows (Dark - needs more opacity to be visible) */
+  --shadow-floating: 0 10px 20px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+  --shadow-floating-hover: 0 25px 30px -5px rgb(0 0 0 / 0.5), 0 10px 12px -5px rgb(0 0 0 / 0.5);
 
   /* Success colors */
-  --success: 142.1 70.6% 45.3%;
+  --success: 142 70% 50%;
   --success-foreground: 144.9 80.4% 10%;
 
   /* Warning colors */
-  --warning: 38 92% 50%;
+  --warning: 48 96% 53%;
   --warning-foreground: 0 0% 9%;
 }
 

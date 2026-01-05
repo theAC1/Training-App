@@ -31,9 +31,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = sessionCreateSchema.parse(body)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: session, error } = await (supabase
-      .from('sessions') as any)
+      .from('sessions') as any) // eslint-disable-line @typescript-eslint/no-explicit-any
       .insert(validatedData)
       .select('*')
       .single()

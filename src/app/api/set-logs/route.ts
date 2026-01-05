@@ -25,9 +25,8 @@ export async function POST(request: NextRequest) {
     const validatedData = setLogCreateSchema.parse(body)
 
     // Check for duplicate using client_uuid
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: existingLog } = await (supabase
-      .from('set_logs') as any)
+      .from('set_logs') as any) // eslint-disable-line @typescript-eslint/no-explicit-any
       .select('id')
       .eq('client_uuid', validatedData.client_uuid)
       .maybeSingle()
@@ -40,9 +39,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: setLog, error } = await (supabase
-      .from('set_logs') as any)
+      .from('set_logs') as any) // eslint-disable-line @typescript-eslint/no-explicit-any
       .insert({
         ...validatedData,
         athlete_id: user.id,
