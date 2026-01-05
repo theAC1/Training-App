@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 // GET /api/exercises - List all exercises
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
     const {
@@ -13,10 +13,20 @@ export async function GET() {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    const { data: exercises, error } = await supabase
+    const { searchParams } = new URL(request.url)
+    const grundform = searchParams.get('grundform')
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let query = (supabase as any)
       .from('exercises')
-      .select('id, name, image_url, categories, muscle_groups')
+      .select('id, name, grundform, image_url, video_url, categories, muscle_groups, equipment, description')
       .order('name', { ascending: true })
+
+    if (grundform) {
+      query = query.eq('grundform', grundform)
+    }
+
+    const { data: exercises, error } = await query
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
@@ -31,7 +41,7 @@ export async function GET() {
   }
 }
 
-// POST /api/exercises - Create new exercise or variation
+// POST /api/exercises - Create new exercise
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -46,7 +56,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const {
       name,
-      parent_exercise_id,
+      grundform,
       image_url,
       video_url,
       categories,
@@ -68,7 +78,7 @@ export async function POST(request: NextRequest) {
       .from('exercises')
       .insert({
         name: name.trim(),
-        parent_exercise_id: parent_exercise_id || null,
+        grundform: grundform || null,
         image_url: image_url || '',
         video_url: video_url || null,
         categories: categories || [],

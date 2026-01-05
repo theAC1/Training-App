@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
-// GET /api/exercises/[id] - Get single exercise with variations
+// GET /api/exercises/[id] - Get single exercise with related exercises
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
@@ -17,7 +17,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Get the exercise
-    const { data: exercise, error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: exercise, error } = await (supabase as any)
       .from('exercises')
       .select('*')
       .eq('id', id)
@@ -27,18 +28,23 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Übung nicht gefunden' }, { status: 404 })
     }
 
-    // Get variations (child exercises)
-    const { data: variations } = await supabase
-      .from('exercises')
-      .select('*')
-      .eq('parent_exercise_id', id)
-      .order('name')
+    // Get related exercises (same grundform, different id)
+    let relatedExercises: unknown[] = []
+    if (exercise.grundform) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: related } = await (supabase as any)
+        .from('exercises')
+        .select('id, name, image_url')
+        .eq('grundform', exercise.grundform)
+        .neq('id', id)
+        .order('name')
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const exerciseObj = exercise as any
+      relatedExercises = related || []
+    }
+
     return NextResponse.json({
-      ...exerciseObj,
-      variations: variations || [],
+      ...exercise,
+      related_exercises: relatedExercises,
     })
   } catch {
     return NextResponse.json(
@@ -62,11 +68,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     const body = await request.json()
-    const { name, image_url, video_url, categories, muscle_groups, equipment, description, purpose_note } = body
+    const { name, grundform, image_url, video_url, categories, muscle_groups, equipment, description, purpose_note } = body
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = { updated_at: new Date().toISOString() }
     if (name !== undefined) updateData.name = name.trim()
+    if (grundform !== undefined) updateData.grundform = grundform || null
     if (image_url !== undefined) updateData.image_url = image_url || ''
     if (video_url !== undefined) updateData.video_url = video_url || null
     if (categories !== undefined) updateData.categories = categories

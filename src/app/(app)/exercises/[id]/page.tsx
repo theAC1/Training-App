@@ -7,24 +7,37 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import {
   ArrowLeft,
   Dumbbell,
-  Plus,
   Pencil,
-  Check,
-  X,
   Trash2,
   Loader2,
   ChevronRight,
+  Save,
+  X,
+  ExternalLink,
 } from 'lucide-react'
 import Link from 'next/link'
+
+interface RelatedExercise {
+  id: string
+  name: string
+  image_url: string | null
+}
 
 interface Exercise {
   id: string
   name: string
-  parent_exercise_id: string | null
+  grundform: string | null
   image_url: string
   video_url: string | null
   categories: string[]
@@ -32,7 +45,12 @@ interface Exercise {
   equipment: string[]
   description: string | null
   purpose_note: string | null
-  variations?: Exercise[]
+  related_exercises?: RelatedExercise[]
+}
+
+interface Grundform {
+  name: string
+  count: number
 }
 
 export default function ExerciseDetailPage() {
@@ -42,28 +60,47 @@ export default function ExerciseDetailPage() {
   const exerciseId = params.id as string
 
   const [exercise, setExercise] = useState<Exercise | null>(null)
+  const [grundformen, setGrundformen] = useState<Grundform[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
-  const [editName, setEditName] = useState('')
   const [isSaving, setIsSaving] = useState(false)
-  const [showAddVariation, setShowAddVariation] = useState(false)
-  const [newVariation, setNewVariation] = useState({
+  const [isTrainer, setIsTrainer] = useState(false)
+
+  // Edit form state
+  const [editData, setEditData] = useState({
     name: '',
-    image_url: '',
-    video_url: '',
+    grundform: '',
+    newGrundform: '',
+    muscleGroups: '',
+    equipment: '',
+    imageUrl: '',
+    videoUrl: '',
     description: '',
   })
-  const [isAddingVariation, setIsAddingVariation] = useState(false)
 
-  // Fetch exercise
+  // Fetch exercise and grundformen
   useEffect(() => {
-    const fetchExercise = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch(`/api/exercises/${exerciseId}`)
-        if (res.ok) {
-          const data = await res.json()
+        const [exerciseRes, grundformenRes, roleRes] = await Promise.all([
+          fetch(`/api/exercises/${exerciseId}`),
+          fetch('/api/exercises/grundformen'),
+          fetch('/api/athletes'),
+        ])
+
+        if (exerciseRes.ok) {
+          const data = await exerciseRes.json()
           setExercise(data)
-          setEditName(data.name)
+          setEditData({
+            name: data.name,
+            grundform: data.grundform || '',
+            newGrundform: '',
+            muscleGroups: data.muscle_groups?.join(', ') || '',
+            equipment: data.equipment?.join(', ') || '',
+            imageUrl: data.image_url || '',
+            videoUrl: data.video_url || '',
+            description: data.description || '',
+          })
         } else {
           toast({
             variant: 'destructive',
@@ -72,6 +109,12 @@ export default function ExerciseDetailPage() {
           })
           router.push('/exercises')
         }
+
+        if (grundformenRes.ok) {
+          setGrundformen(await grundformenRes.json())
+        }
+
+        setIsTrainer(roleRes.ok)
       } catch {
         toast({
           variant: 'destructive',
@@ -83,37 +126,59 @@ export default function ExerciseDetailPage() {
       }
     }
 
-    fetchExercise()
+    fetchData()
   }, [exerciseId, router, toast])
 
-  // Save name edit
-  const handleSaveName = async () => {
-    if (!editName.trim() || editName === exercise?.name) {
-      setIsEditing(false)
-      return
-    }
+  // Save changes
+  const handleSave = async () => {
+    if (!editData.name.trim()) return
+
+    // Use new grundform if provided, otherwise selected one
+    const finalGrundform = editData.newGrundform.trim() || editData.grundform || null
 
     setIsSaving(true)
     try {
       const res = await fetch(`/api/exercises/${exerciseId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: editName.trim() }),
+        body: JSON.stringify({
+          name: editData.name.trim(),
+          grundform: finalGrundform,
+          image_url: editData.imageUrl.trim() || '',
+          video_url: editData.videoUrl.trim() || null,
+          description: editData.description.trim() || null,
+          muscle_groups: editData.muscleGroups
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean),
+          equipment: editData.equipment
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean),
+        }),
       })
 
       if (res.ok) {
         const updated = await res.json()
-        setExercise((prev) => (prev ? { ...prev, name: updated.name } : null))
+        setExercise((prev) =>
+          prev
+            ? {
+                ...prev,
+                ...updated,
+              }
+            : null
+        )
         setIsEditing(false)
         toast({
           title: 'Gespeichert',
-          description: 'Name wurde aktualisiert',
+          description: 'Änderungen wurden übernommen',
         })
       } else {
+        const error = await res.json()
         toast({
           variant: 'destructive',
           title: 'Fehler',
-          description: 'Konnte nicht speichern',
+          description: error.error || 'Konnte nicht speichern',
         })
       }
     } catch {
@@ -127,68 +192,26 @@ export default function ExerciseDetailPage() {
     }
   }
 
-  // Add variation
-  const handleAddVariation = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newVariation.name.trim()) return
-
-    setIsAddingVariation(true)
-    try {
-      const res = await fetch('/api/exercises', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: newVariation.name.trim(),
-          parent_exercise_id: exerciseId,
-          image_url: newVariation.image_url.trim() || '',
-          video_url: newVariation.video_url.trim() || null,
-          description: newVariation.description.trim() || null,
-          categories: exercise?.categories || [],
-          muscle_groups: exercise?.muscle_groups || [],
-          equipment: exercise?.equipment || [],
-        }),
+  // Cancel editing
+  const handleCancel = () => {
+    if (exercise) {
+      setEditData({
+        name: exercise.name,
+        grundform: exercise.grundform || '',
+        newGrundform: '',
+        muscleGroups: exercise.muscle_groups?.join(', ') || '',
+        equipment: exercise.equipment?.join(', ') || '',
+        imageUrl: exercise.image_url || '',
+        videoUrl: exercise.video_url || '',
+        description: exercise.description || '',
       })
-
-      if (res.ok) {
-        const variation = await res.json()
-        setExercise((prev) =>
-          prev
-            ? { ...prev, variations: [...(prev.variations || []), variation] }
-            : null
-        )
-        setShowAddVariation(false)
-        setNewVariation({ name: '', image_url: '', video_url: '', description: '' })
-        toast({
-          title: 'Variante erstellt',
-          description: `${variation.name} wurde hinzugefügt`,
-        })
-      } else {
-        const error = await res.json()
-        toast({
-          variant: 'destructive',
-          title: 'Fehler',
-          description: error.error || 'Konnte Variante nicht erstellen',
-        })
-      }
-    } catch {
-      toast({
-        variant: 'destructive',
-        title: 'Fehler',
-        description: 'Ein Fehler ist aufgetreten',
-      })
-    } finally {
-      setIsAddingVariation(false)
     }
+    setIsEditing(false)
   }
 
   // Delete exercise
   const handleDelete = async () => {
-    const variationCount = exercise?.variations?.length || 0
-    const message = variationCount > 0
-      ? `Möchtest du "${exercise?.name}" und alle ${variationCount} Varianten wirklich löschen?`
-      : `Möchtest du "${exercise?.name}" wirklich löschen?`
-
-    if (!confirm(message)) return
+    if (!confirm(`Möchtest du "${exercise?.name}" wirklich löschen?`)) return
 
     try {
       const res = await fetch(`/api/exercises/${exerciseId}`, {
@@ -241,12 +264,10 @@ export default function ExerciseDetailPage() {
     return null
   }
 
-  const isMainExercise = !exercise.parent_exercise_id
-
   return (
     <>
       <Header
-        title={isMainExercise ? 'Hauptübung' : 'Übungsvariante'}
+        title="Übung"
         leftAction={
           <Button variant="ghost" size="icon" asChild>
             <Link href="/exercises">
@@ -255,278 +276,274 @@ export default function ExerciseDetailPage() {
           </Button>
         }
         rightAction={
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-destructive"
-            onClick={handleDelete}
-          >
-            <Trash2 className="h-5 w-5" />
-          </Button>
+          isTrainer && !isEditing && (
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)}>
+                <Pencil className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-destructive"
+                onClick={handleDelete}
+              >
+                <Trash2 className="h-5 w-5" />
+              </Button>
+            </div>
+          )
         }
       />
       <div className="space-y-6 p-4">
-        {/* Main Exercise Info */}
+        {/* Exercise Info Card */}
         <Card>
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              {isEditing ? (
-                <div className="flex flex-1 items-center gap-2">
-                  <Input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="text-lg font-semibold"
-                    autoFocus
-                  />
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={handleSaveName}
-                    disabled={isSaving}
-                  >
-                    {isSaving ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Check className="h-4 w-4 text-green-600" />
-                    )}
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => {
-                      setIsEditing(false)
-                      setEditName(exercise.name)
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <CardTitle className="text-xl">{exercise.name}</CardTitle>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
-            </div>
+            <CardTitle className="text-xl">{exercise.name}</CardTitle>
+            {exercise.grundform && (
+              <p className="text-sm text-muted-foreground">
+                Grundform: {exercise.grundform}
+              </p>
+            )}
           </CardHeader>
-          <CardContent>
-            {exercise.categories && exercise.categories.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {exercise.categories.map((cat) => (
-                  <span
-                    key={cat}
-                    className="rounded-full bg-muted px-3 py-1 text-sm"
-                  >
-                    {cat}
-                  </span>
-                ))}
+          <CardContent className="space-y-4">
+            {/* Image */}
+            {exercise.image_url && (
+              <div className="overflow-hidden rounded-lg">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={exercise.image_url}
+                  alt={exercise.name}
+                  className="w-full object-cover max-h-64"
+                />
               </div>
             )}
+
+            {/* Muscle Groups */}
+            {exercise.muscle_groups && exercise.muscle_groups.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium mb-2">Muskelgruppen</h4>
+                <div className="flex flex-wrap gap-2">
+                  {exercise.muscle_groups.map((mg) => (
+                    <span
+                      key={mg}
+                      className="rounded-full bg-primary/10 px-3 py-1 text-sm"
+                    >
+                      {mg}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Equipment */}
+            {exercise.equipment && exercise.equipment.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium mb-2">Equipment</h4>
+                <div className="flex flex-wrap gap-2">
+                  {exercise.equipment.map((eq) => (
+                    <span
+                      key={eq}
+                      className="rounded-full bg-muted px-3 py-1 text-sm"
+                    >
+                      {eq}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Description */}
             {exercise.description && (
-              <p className="mt-3 text-sm text-muted-foreground">
-                {exercise.description}
-              </p>
+              <div>
+                <h4 className="text-sm font-medium mb-2">Beschreibung</h4>
+                <p className="text-sm text-muted-foreground">{exercise.description}</p>
+              </div>
+            )}
+
+            {/* Video Link */}
+            {exercise.video_url && (
+              <a
+                href={exercise.video_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Video ansehen
+              </a>
             )}
           </CardContent>
         </Card>
 
-        {/* Variations Section (only for main exercises) */}
-        {isMainExercise && (
-          <>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
-                Varianten ({exercise.variations?.length || 0})
-              </h2>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowAddVariation(true)}
-              >
-                <Plus className="mr-1 h-4 w-4" />
-                Variante
-              </Button>
-            </div>
-
-            {/* Add Variation Form */}
-            {showAddVariation && (
-              <Card>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">Neue Variante</CardTitle>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowAddVariation(false)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleAddVariation} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="varName">Name *</Label>
-                      <Input
-                        id="varName"
-                        value={newVariation.name}
-                        onChange={(e) =>
-                          setNewVariation((v) => ({ ...v, name: e.target.value }))
-                        }
-                        placeholder="z.B. Sumo Deadlift"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="varImage">Bild URL (optional)</Label>
-                      <Input
-                        id="varImage"
-                        value={newVariation.image_url}
-                        onChange={(e) =>
-                          setNewVariation((v) => ({ ...v, image_url: e.target.value }))
-                        }
-                        placeholder="https://..."
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="varVideo">Video URL (optional)</Label>
-                      <Input
-                        id="varVideo"
-                        value={newVariation.video_url}
-                        onChange={(e) =>
-                          setNewVariation((v) => ({ ...v, video_url: e.target.value }))
-                        }
-                        placeholder="https://youtube.com/..."
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="varDesc">Beschreibung (optional)</Label>
-                      <Input
-                        id="varDesc"
-                        value={newVariation.description}
-                        onChange={(e) =>
-                          setNewVariation((v) => ({ ...v, description: e.target.value }))
-                        }
-                        placeholder="Kurze Beschreibung..."
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button type="submit" disabled={isAddingVariation}>
-                        {isAddingVariation && (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        )}
-                        Erstellen
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setShowAddVariation(false)}
-                      >
-                        Abbrechen
-                      </Button>
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Variations List */}
-            {exercise.variations && exercise.variations.length > 0 ? (
-              <div className="space-y-3">
-                {exercise.variations.map((variation) => (
-                  <Link
-                    key={variation.id}
-                    href={`/exercises/${variation.id}`}
-                  >
-                    <Card className="transition-colors hover:bg-accent">
-                      <CardContent className="flex items-center gap-4 p-4">
-                        <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
-                          {variation.image_url ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={variation.image_url}
-                              alt={variation.name}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center">
-                              <Dumbbell className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 overflow-hidden">
-                          <h3 className="font-medium">{variation.name}</h3>
-                          {variation.description && (
-                            <p className="truncate text-sm text-muted-foreground">
-                              {variation.description}
-                            </p>
-                          )}
-                        </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              !showAddVariation && (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center py-8">
-                    <Dumbbell className="mb-3 h-8 w-8 text-muted-foreground" />
-                    <p className="text-center text-sm text-muted-foreground">
-                      Noch keine Varianten vorhanden
-                    </p>
-                    <Button
-                      className="mt-3"
-                      size="sm"
-                      onClick={() => setShowAddVariation(true)}
-                    >
-                      <Plus className="mr-1 h-4 w-4" />
-                      Erste Variante erstellen
-                    </Button>
-                  </CardContent>
-                </Card>
-              )
-            )}
-          </>
-        )}
-
-        {/* For variations: show image and video */}
-        {!isMainExercise && (
+        {/* Edit Form */}
+        {isEditing && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Medien</CardTitle>
+              <CardTitle className="text-base">Übung bearbeiten</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {exercise.image_url ? (
-                <div className="overflow-hidden rounded-lg">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={exercise.image_url}
-                    alt={exercise.name}
-                    className="w-full object-cover"
-                  />
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">Kein Bild vorhanden</p>
-              )}
-              {exercise.video_url && (
-                <a
-                  href={exercise.video_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center text-sm text-primary hover:underline"
+              <div className="space-y-2">
+                <Label htmlFor="editName">Name *</Label>
+                <Input
+                  id="editName"
+                  value={editData.name}
+                  onChange={(e) =>
+                    setEditData((d) => ({ ...d, name: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editGrundform">Grundform</Label>
+                <Select
+                  value={editData.grundform || 'none'}
+                  onValueChange={(val) => {
+                    setEditData((d) => ({
+                      ...d,
+                      grundform: val === 'none' ? '' : val,
+                      newGrundform: val === 'new' ? d.newGrundform : '',
+                    }))
+                  }}
                 >
-                  Video ansehen →
-                </a>
-              )}
+                  <SelectTrigger>
+                    <SelectValue placeholder="Grundform auswählen..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Keine Grundform</SelectItem>
+                    <SelectItem value="new">+ Neue Grundform erstellen</SelectItem>
+                    {grundformen.map((gf) => (
+                      <SelectItem key={gf.name} value={gf.name}>
+                        {gf.name} ({gf.count})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {editData.grundform === 'new' && (
+                  <Input
+                    value={editData.newGrundform}
+                    onChange={(e) =>
+                      setEditData((d) => ({ ...d, newGrundform: e.target.value }))
+                    }
+                    placeholder="Name der neuen Grundform"
+                    className="mt-2"
+                  />
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editMuscles">Muskelgruppen</Label>
+                <Input
+                  id="editMuscles"
+                  value={editData.muscleGroups}
+                  onChange={(e) =>
+                    setEditData((d) => ({ ...d, muscleGroups: e.target.value }))
+                  }
+                  placeholder="Komma-getrennt"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editEquipment">Equipment</Label>
+                <Input
+                  id="editEquipment"
+                  value={editData.equipment}
+                  onChange={(e) =>
+                    setEditData((d) => ({ ...d, equipment: e.target.value }))
+                  }
+                  placeholder="Komma-getrennt"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editImage">Bild URL</Label>
+                <Input
+                  id="editImage"
+                  value={editData.imageUrl}
+                  onChange={(e) =>
+                    setEditData((d) => ({ ...d, imageUrl: e.target.value }))
+                  }
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editVideo">Video URL</Label>
+                <Input
+                  id="editVideo"
+                  value={editData.videoUrl}
+                  onChange={(e) =>
+                    setEditData((d) => ({ ...d, videoUrl: e.target.value }))
+                  }
+                  placeholder="https://youtube.com/..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editDesc">Beschreibung</Label>
+                <textarea
+                  id="editDesc"
+                  value={editData.description}
+                  onChange={(e) =>
+                    setEditData((d) => ({ ...d, description: e.target.value }))
+                  }
+                  placeholder="Kurze Beschreibung..."
+                  className="w-full min-h-[80px] p-2 text-sm border rounded-lg"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button onClick={handleSave} disabled={isSaving || !editData.name.trim()}>
+                  {isSaving ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="mr-2 h-4 w-4" />
+                  )}
+                  Speichern
+                </Button>
+                <Button variant="outline" onClick={handleCancel}>
+                  <X className="mr-2 h-4 w-4" />
+                  Abbrechen
+                </Button>
+              </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Related Exercises (same Grundform) */}
+        {exercise.related_exercises && exercise.related_exercises.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-3">
+              Weitere {exercise.grundform}-Übungen
+            </h2>
+            <div className="space-y-2">
+              {exercise.related_exercises.map((related) => (
+                <Link key={related.id} href={`/exercises/${related.id}`}>
+                  <Card className="transition-colors hover:bg-accent">
+                    <CardContent className="flex items-center gap-4 p-3">
+                      <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
+                        {related.image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={related.image_url}
+                            alt={related.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <Dumbbell className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-medium">{related.name}</h3>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </>
