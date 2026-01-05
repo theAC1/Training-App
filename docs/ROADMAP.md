@@ -5,15 +5,15 @@
 | Milestone | Name | Beschreibung | Status |
 |-----------|------|--------------|--------|
 | 1 | Foundation | Stack, Auth, Layout, Routing | ✅ Completed |
-| 2 | Übungsdatenbank | CRUD, Varianten, Bild-Upload | ✅ Completed |
+| 2 | Übungsdatenbank | CRUD, Varianten, Bild-URLs | ✅ Completed |
 | 3 | Plan Builder | Meso, Sessions, Blocks | ✅ Completed |
-| 4 | Athlet Execution | Logging, Auto-Save, Historie | ⏳ Pending |
+| 4 | Athlet Execution | Logging, Timer, Historie | ⚠️ Partial |
 | 5 | Offline PWA Sync | Service Worker, IndexedDB, Sync | ✅ Completed |
-| 6 | Polish & Deploy | Performance, A11y, Final QA | ⏳ Pending |
+| 6 | Athlet UI & Polish | Session-Ausführung, Finish MVP | 🔜 Next |
 
 ---
 
-## Milestone 1: Foundation
+## Milestone 1: Foundation ✅
 
 **Ziel:** Solides technisches Fundament mit funktionierender Auth.
 
@@ -24,93 +24,103 @@
 - [x] ESLint, Prettier Konfiguration
 - [x] Tailwind mit Dark Mode Setup
 - [x] Dokumentation erstellen (PRODUCT, ARCHITECTURE, DATA_MODEL, ROADMAP)
-- [ ] Supabase Projekt & Schema
-- [ ] Supabase Client Integration
-- [ ] Auth Middleware
-- [ ] Invite-Only Signup Flow
-- [ ] Login/Logout Flow
-- [ ] Basis-Layout mit Navigation
-- [ ] Route-Skeleton (alle Hauptrouten)
-- [ ] Dark Mode Toggle
+- [x] Supabase Projekt & Schema
+- [x] Supabase Client Integration (Browser + Server)
+- [x] Auth Middleware (Session-Management)
+- [x] Invite-Only Signup Flow
+- [x] Login/Logout Flow (Email + Google OAuth)
+- [x] Basis-Layout mit Navigation
+- [x] Route-Skeleton (alle Hauptrouten)
+- [x] Dark Mode Toggle
 
-### Akzeptanzkriterien
+### Akzeptanzkriterien ✅
 
-1. App startet ohne Fehler (`npm run dev`)
-2. Login-Seite wird angezeigt
-3. Signup nur mit gültigem Invite-Code möglich
-4. Nach Login → Dashboard (role-based)
-5. Dark Mode funktioniert
-6. Navigation zwischen Hauptrouten möglich
+1. ✅ App startet ohne Fehler
+2. ✅ Login-Seite wird angezeigt
+3. ✅ Signup nur mit gültigem Invite-Code möglich
+4. ✅ Nach Login → Dashboard (role-based)
+5. ✅ Dark Mode funktioniert
+6. ✅ Navigation zwischen Hauptrouten möglich
 
 ---
 
-## Milestone 2: Übungsdatenbank
+## Milestone 2: Übungsdatenbank ✅
 
-**Ziel:** Trainer kann Übungen mit Varianten und Bildern verwalten.
+**Ziel:** Trainer kann Übungen mit Varianten verwalten.
 
 ### Tasks
 
-- [ ] Exercise CRUD API Routes
-- [ ] Exercise-Liste Ansicht
-- [ ] Exercise-Detail Ansicht
-- [ ] Neue Übung Formular
-- [ ] Bild-Upload zu Supabase Storage
-- [ ] Varianten-Hierarchie (Parent auswählen)
-- [ ] Video-URL Feld
-- [ ] Such- und Filteroptionen
-- [ ] Kategorien und Muskelgruppen als Tags
+- [x] Exercise CRUD API Routes
+- [x] Exercise-Liste Ansicht
+- [x] Exercise-Detail Ansicht
+- [x] Neue Übung Formular
+- [x] Varianten-Hierarchie (Parent auswählen)
+- [x] Video-URL Feld
+- [x] Kategorien und Muskelgruppen als Felder
+- [ ] ~~Bild-Upload zu Supabase Storage~~ (nur URL-basiert)
+- [ ] ~~Such- und Filteroptionen~~ (verschoben nach Post-MVP)
 
-### Akzeptanzkriterien
+### Akzeptanzkriterien ✅
 
-1. Trainer kann neue Übung anlegen (Name, Bild, Kategorie)
-2. Bild wird hochgeladen und angezeigt
-3. Variante kann Parent-Übung referenzieren
-4. Übungen sind filterbar nach Kategorie/Muskel
-5. Athlet sieht Übungen readonly
+1. ✅ Trainer kann neue Übung anlegen (Name)
+2. ✅ Bild-URL kann hinterlegt werden
+3. ✅ Variante kann Parent-Übung referenzieren
+4. ⏸️ Filter nach Kategorie/Muskel (verschoben)
+5. ✅ Athlet sieht Übungen readonly
 
 ---
 
-## Milestone 3: Plan Builder
+## Milestone 3: Plan Builder ✅
 
 **Ziel:** Trainer kann komplette Mesozyklen mit Sessions planen.
 
 ### Tasks
 
-- [ ] Mesocycle CRUD
-- [ ] Session CRUD innerhalb Meso
-- [ ] Session-Block System (Single, Superset, Cluster)
-- [ ] Übungen zu Blocks hinzufügen
-- [ ] Prescription setzen (Sets, Reps, Gewicht, RIR, Pause)
-- [ ] Cluster-Konfiguration (Reps, Count, Pause)
-- [ ] Meso einem Athleten zuweisen
-- [ ] Wochen-Übersicht (4 Wochen Default)
-- [ ] Session-Vorschau
+- [x] Mesocycle CRUD
+- [x] Session CRUD innerhalb Meso
+- [x] Session-Block System (Single, Superset, Cluster)
+- [x] Übungen zu Blocks hinzufügen
+- [x] Prescription setzen (Sets, Reps, Gewicht, RIR, Pause)
+- [x] Cluster-Konfiguration (Reps, Count, Pause)
+- [x] Meso einem Athleten zuweisen
+- [x] Wochen-Übersicht
+- [x] Session-Vorschau
 
-### Akzeptanzkriterien
+### Akzeptanzkriterien ✅
 
-1. Trainer kann Meso mit 4 Wochen erstellen
-2. Jede Woche kann Sessions enthalten
-3. Superset mit 2+ Übungen erstellbar
-4. Cluster-Set konfigurierbar
-5. Athlet sieht zugewiesene Mesos
+1. ✅ Trainer kann Meso mit konfigurierbaren Wochen erstellen
+2. ✅ Jede Woche kann Sessions enthalten
+3. ✅ Superset mit 2+ Übungen erstellbar
+4. ✅ Cluster-Set konfigurierbar
+5. ✅ Athlet sieht zugewiesene Mesos
 
 ---
 
-## Milestone 4: Athlet Execution
+## Milestone 4: Athlet Execution ⚠️ PARTIAL
 
 **Ziel:** Athlet kann Training loggen - schnell und einfach.
 
-### Tasks
+### Backend (✅ Done)
 
-- [ ] Session-Ansicht für Athlet
-- [ ] Block/Übungs-Navigation
-- [ ] Set-Logger Komponente
+- [x] Set-Log Datenmodell
+- [x] Set-Log API (POST, GET)
+- [x] Client UUID für Deduplizierung
+- [x] Batch-Insert Support
+
+### Frontend (❌ Missing - Kritisch!)
+
+- [ ] **Session-Ausführungs-UI für Athlet**
+- [ ] Block/Übungs-Navigation während Session
+- [ ] Set-Logger Komponente mit Inline-Eingabe
 - [ ] Reps-Eingabe (Pflicht)
-- [ ] Gewicht-Anpassung (optional)
+- [ ] Gewicht-Anpassung (optional, vorbefüllt)
 - [ ] Pain Flag Checkbox
 - [ ] Auto-Save nach Eingabe
 - [ ] Rest-Timer mit Start/Stop
-- [ ] Session abschließen
+
+### Zusatzfeatures (⏸️ Verschoben)
+
+- [ ] Session abschließen Funktion
 - [ ] Übungshistorie Ansicht
 - [ ] Personal Best Erkennung
 - [ ] PB-Anzeige auf Dashboard
@@ -118,17 +128,17 @@
 
 ### Akzeptanzkriterien
 
-1. Set-Logging in < 5 Sekunden möglich
-2. Gewicht ist vorbefüllt, änderbar
-3. Pain Flag kann gesetzt werden
-4. Timer funktioniert (manuell)
-5. Historie zeigt letzte Logs
-6. PBs werden erkannt und angezeigt
-7. Streak wird auf Dashboard gezeigt
+1. ❌ Set-Logging in < 5 Sekunden möglich
+2. ❌ Gewicht ist vorbefüllt, änderbar
+3. ❌ Pain Flag kann gesetzt werden
+4. ❌ Timer funktioniert
+5. ⏸️ Historie zeigt letzte Logs
+6. ⏸️ PBs werden erkannt
+7. ⏸️ Streak auf Dashboard
 
 ---
 
-## Milestone 5: Offline PWA Sync
+## Milestone 5: Offline PWA Sync ✅
 
 **Ziel:** App funktioniert offline, Daten werden zuverlässig synchronisiert.
 
@@ -147,72 +157,119 @@
 - [x] Retry mit Backoff
 - [x] Konflikt-Handling (append-only)
 
-### Akzeptanzkriterien
+### Akzeptanzkriterien ✅
 
-1. App öffnet offline (cached Shell)
-2. Zugewiesene Sessions sind offline verfügbar
-3. Logs werden lokal gespeichert
-4. Beim Reconnect: automatischer Sync
-5. Keine Duplikate nach Sync
-6. Pending-Counter zeigt wartende Logs
-7. Counter geht nach Sync auf 0
+1. ✅ App öffnet offline (cached Shell)
+2. ✅ Infrastructure für offline Sessions vorhanden
+3. ✅ Logs werden lokal gespeichert
+4. ✅ Automatischer Sync bei Reconnect
+5. ✅ Keine Duplikate nach Sync
+6. ✅ Pending-Counter UI vorhanden
+7. ✅ Counter geht nach Sync auf 0
 
 ---
 
-## Milestone 6: Polish & Deploy
+## Milestone 6: Athlet UI & Polish 🔜 NEXT
 
-**Ziel:** Produktionsreife App auf Vercel.
+**Ziel:** MVP-Fertigstellung mit funktionierender Athleten-Session-Ausführung.
 
-### Tasks
+### Phase 6.1: Session-Ausführung (Priorität 1 - Kritisch)
 
-- [ ] Performance Audit (Lighthouse)
-- [ ] Accessibility Check
-- [ ] iPhone Safari Spezifika
-- [ ] Android Chrome Test
-- [ ] Safe Area Insets
-- [ ] Touch Feedback verbessern
+- [ ] `/session/[id]` Route für aktive Session
+- [ ] Session-Header mit Fortschrittsanzeige
+- [ ] Block-für-Block Navigation
+- [ ] Übungs-Card mit:
+  - Übungsname und Bild
+  - Prescription (Sets × Reps @ Gewicht)
+  - RIR-Vorgabe
+- [ ] Set-Logger Inline-Formular:
+  - Reps-Input (numpad-optimiert)
+  - Gewicht-Input (vorbefüllt mit letztem Wert)
+  - Pain-Flag Toggle
+  - Quick-Notes Feld
+- [ ] Set-Liste pro Übung (erledigt/ausstehend)
+- [ ] "Nächster Set" / "Nächste Übung" Navigation
+- [ ] Rest-Timer:
+  - Countdown basierend auf Prescription
+  - Start/Stop/Reset
+  - Vibration bei Ende (falls unterstützt)
+
+### Phase 6.2: Session-Management
+
+- [ ] Session starten (started_at setzen)
+- [ ] Session abschließen (completed_at setzen)
+- [ ] Zusammenfassung nach Session:
+  - Gesamtvolumen
+  - Dauer
+  - Abgeschlossene Sets
+
+### Phase 6.3: Historie & Feedback
+
+- [ ] Letzte Logs pro Übung anzeigen (während Session)
+- [ ] Einfache Workout-Historie auf Dashboard
+- [ ] Erfolgs-Toast nach jedem Set
+
+### Phase 6.4: Polish & QA
+
+- [ ] Loading States für alle Aktionen
 - [ ] Error Boundaries
-- [ ] Loading States
-- [ ] Empty States
-- [ ] Seed-Daten für Demo
-- [ ] Vercel Deployment Setup
-- [ ] Environment Variables
-- [ ] Domain konfigurieren (optional)
-- [ ] README für Deployment
+- [ ] iPhone Safari Optimierung
+- [ ] Android Chrome Test
+- [ ] Touch Feedback verbessern
+- [ ] Performance Check
 
-### Akzeptanzkriterien
+### Akzeptanzkriterien Milestone 6
 
-1. Lighthouse Performance > 80
-2. Lighthouse Accessibility > 90
-3. Funktioniert auf iPhone Safari
-4. Funktioniert auf Android Chrome
-5. Deployment reproduzierbar dokumentiert
-6. Keine kritischen Fehler in Console
+1. Athlet kann Session öffnen und Sets loggen
+2. Set-Logging in < 5 Sekunden möglich
+3. Timer funktioniert während Pausen
+4. Offline-Logging funktioniert nahtlos
+5. Session kann abgeschlossen werden
+6. Funktioniert auf iOS Safari und Android Chrome
 
 ---
 
 ## Post-MVP Roadmap (Future)
 
-### Phase 2: Erweiterungen
+### Phase 7: Analytics & Progression
 
-- [ ] Variable Meso-Länge (nicht nur 4 Wochen)
-- [ ] Coach Analytics Dashboard
+- [ ] Personal Best Erkennung und Anzeige
+- [ ] Streak-Counter auf Dashboard
 - [ ] Trainingsvolumen-Tracking
+- [ ] Übungshistorie mit Graphen
+- [ ] Coach Analytics Dashboard
+
+### Phase 8: Erweiterungen
+
+- [ ] Variable Meso-Länge
+- [ ] Template-System für Mesos
 - [ ] Export-Funktionen (CSV, PDF)
 - [ ] Push Notifications
 - [ ] Multi-Trainer Support
+- [ ] Bild-Upload zu Storage
 
-### Phase 3: Tests & Messungen
+### Phase 9: Tests & Messungen
 
 - [ ] Test-Typen definieren (Sprint, Sprung, etc.)
 - [ ] Test-Eingabe für Athleten
 - [ ] Test-Historie und Trends
 - [ ] Verknüpfung mit Training
 
-### Phase 4: Erweiterte Features
+### Phase 10: Erweiterte Features
 
+- [ ] RPE statt/zusätzlich zu RIR
+- [ ] Tempo-Spezifikationen
 - [ ] Auto-Progression Logik
-- [ ] RPE statt RIR Option
 - [ ] Video-Analyse Integration
 - [ ] Erweiterte Gamification
-- [ ] Team-Challenges (opt-in)
+
+---
+
+## Changelog
+
+| Datum | Änderung |
+|-------|----------|
+| 2026-01-05 | ROADMAP aktualisiert: Milestone 1-3, 5 als complete markiert. Milestone 4 als partial. Neuer Milestone 6 Fokus auf Athlet-UI. |
+| 2026-01-05 | Athleten-System neu designed (separate athletes Tabelle) |
+| 2026-01-05 | Google OAuth hinzugefügt |
+| 2026-01-05 | Übungs-Detail-Seite mit Edit/Varianten implementiert |
