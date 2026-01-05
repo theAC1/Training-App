@@ -436,12 +436,15 @@ export default function SessionEditorPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="session-day">Wochentag</Label>
-              <Select value={sessionDayOfWeek} onValueChange={setSessionDayOfWeek}>
+              <Select
+                value={sessionDayOfWeek || 'none'}
+                onValueChange={(val) => setSessionDayOfWeek(val === 'none' ? '' : val)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Tag auswählen" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Kein Tag</SelectItem>
+                  <SelectItem value="none">Kein Tag</SelectItem>
                   {Object.entries(dayOfWeekLabels).map(([value, label]) => (
                     <SelectItem key={value} value={value}>
                       {label}

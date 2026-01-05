@@ -25,6 +25,8 @@ import {
   Trash2,
   Edit,
   Dumbbell,
+  Copy,
+  X,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -68,6 +70,11 @@ interface Profile {
   name: string
 }
 
+interface Athlete {
+  id: string
+  name: string
+}
+
 interface Mesocycle {
   id: string
   name: string
@@ -92,6 +99,14 @@ export default function MesocycleDetailPage() {
   const [newSessionDayOfWeek, setNewSessionDayOfWeek] = useState<string>('')
   const [showEditMenu, setShowEditMenu] = useState<string | null>(null)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+
+  // Copy modal state
+  const [showCopyModal, setShowCopyModal] = useState(false)
+  const [athletes, setAthletes] = useState<Athlete[]>([])
+  const [selectedAthleteId, setSelectedAthleteId] = useState<string>('')
+  const [copyName, setCopyName] = useState('')
+  const [isCopying, setIsCopying] = useState(false)
+  const [isLoadingAthletes, setIsLoadingAthletes] = useState(false)
 
   const loadMesocycle = useCallback(async () => {
     try {
@@ -251,6 +266,67 @@ export default function MesocycleDetailPage() {
     }
   }
 
+  const loadAthletes = async () => {
+    setIsLoadingAthletes(true)
+    try {
+      const response = await fetch('/api/athletes')
+      if (response.ok) {
+        const data = await response.json()
+        setAthletes(data)
+      }
+    } catch {
+      console.error('Fehler beim Laden der Athleten')
+    } finally {
+      setIsLoadingAthletes(false)
+    }
+  }
+
+  const handleOpenCopyModal = () => {
+    setShowCopyModal(true)
+    setCopyName(mesocycle ? `${mesocycle.name} (Kopie)` : '')
+    setSelectedAthleteId('')
+    loadAthletes()
+  }
+
+  const handleCopyMesocycle = async () => {
+    if (!mesocycle || !selectedAthleteId) return
+
+    setIsCopying(true)
+    try {
+      const response = await fetch(`/api/mesocycles/${mesocycle.id}/copy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          athlete_id: selectedAthleteId,
+          name: copyName || undefined,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Fehler beim Kopieren')
+      }
+
+      const result = await response.json()
+
+      toast({
+        title: 'Erfolg',
+        description: 'Mesozyklus wurde kopiert',
+      })
+
+      setShowCopyModal(false)
+      router.push(`/plan/${result.mesocycle.id}`)
+    } catch (error) {
+      toast({
+        title: 'Fehler',
+        description: error instanceof Error ? error.message : 'Kopieren fehlgeschlagen',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsCopying(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <>
@@ -302,20 +378,30 @@ export default function MesocycleDetailPage() {
                   {mesocycle.phase && ` • ${mesocycle.phase}`}
                 </p>
               </div>
-              <Select
-                value={mesocycle.status}
-                onValueChange={handleUpdateStatus}
-                disabled={isUpdatingStatus}
-              >
-                <SelectTrigger className="w-36">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">{statusLabels.draft}</SelectItem>
-                  <SelectItem value="active">{statusLabels.active}</SelectItem>
-                  <SelectItem value="completed">{statusLabels.completed}</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenCopyModal}
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  Kopieren
+                </Button>
+                <Select
+                  value={mesocycle.status}
+                  onValueChange={handleUpdateStatus}
+                  disabled={isUpdatingStatus}
+                >
+                  <SelectTrigger className="w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">{statusLabels.draft}</SelectItem>
+                    <SelectItem value="active">{statusLabels.active}</SelectItem>
+                    <SelectItem value="completed">{statusLabels.completed}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -478,6 +564,84 @@ export default function MesocycleDetailPage() {
           ))}
         </Tabs>
       </div>
+
+      {/* Copy Modal */}
+      {showCopyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="w-full max-w-md mx-4">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Mesozyklus kopieren</h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowCopyModal(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Neuer Name</Label>
+                  <Input
+                    value={copyName}
+                    onChange={(e) => setCopyName(e.target.value)}
+                    placeholder="Name des kopierten Mesozyklus"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Ziel-Athlet *</Label>
+                  {isLoadingAthletes ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : athletes.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-2">
+                      Keine Athleten vorhanden. Erstelle zuerst einen Athleten.
+                    </p>
+                  ) : (
+                    <Select
+                      value={selectedAthleteId}
+                      onValueChange={setSelectedAthleteId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Athlet auswählen" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {athletes.map((athlete) => (
+                          <SelectItem key={athlete.id} value={athlete.id}>
+                            {athlete.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setShowCopyModal(false)}
+                  >
+                    Abbrechen
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    onClick={handleCopyMesocycle}
+                    disabled={isCopying || !selectedAthleteId}
+                  >
+                    {isCopying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Kopieren
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </>
   )
 }

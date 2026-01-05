@@ -17,6 +17,7 @@ import { Loader2 } from 'lucide-react'
 interface InviteData {
   athlete_name: string | null
   role: 'trainer' | 'athlete'
+  athlete_id?: string // Only for athlete invites from athletes table
 }
 
 const signupSchema = z
@@ -54,16 +55,47 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupForm) => {
     setIsLoading(true)
     try {
-      // 1. Validate invite code
-      const { data: invite, error: inviteError } = (await supabase
+      const codeUpper = data.inviteCode.toUpperCase()
+      let invite: InviteData | null = null
+
+      // 1. First check the invites table (for trainer invites)
+      const { data: inviteFromTable, error: inviteError } = (await supabase
         .from('invites')
         .select('*')
-        .eq('code', data.inviteCode.toUpperCase())
+        .eq('code', codeUpper)
         .is('used_at', null)
         .gt('expires_at', new Date().toISOString())
         .single()) as { data: InviteData | null; error: Error | null }
 
-      if (inviteError || !invite) {
+      if (inviteFromTable && !inviteError) {
+        invite = {
+          athlete_name: inviteFromTable.athlete_name,
+          role: inviteFromTable.role,
+        }
+      }
+
+      // 2. If not found, check the athletes table (for athlete invites)
+      if (!invite) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: athleteWithCode } = await (supabase as any)
+          .from('athletes')
+          .select('id, name, user_id, invite_expires_at')
+          .eq('invite_code', codeUpper)
+          .is('user_id', null) // Not yet linked to a user
+          .gt('invite_expires_at', new Date().toISOString())
+          .single()
+
+        if (athleteWithCode) {
+          invite = {
+            athlete_name: athleteWithCode.name,
+            role: 'athlete',
+            athlete_id: athleteWithCode.id,
+          }
+        }
+      }
+
+      // 3. If still not found, show error
+      if (!invite) {
         toast({
           variant: 'destructive',
           title: 'Ungültiger Code',
@@ -74,7 +106,7 @@ export default function SignupPage() {
         return
       }
 
-      // 2. Create user account
+      // 4. Create user account
       const { data: authData, error: signupError } = await supabase.auth.signUp(
         {
           email: data.email,
@@ -83,6 +115,7 @@ export default function SignupPage() {
             data: {
               name: invite.athlete_name || data.name,
               role: invite.role,
+              athlete_id: invite.athlete_id, // Pass athlete_id for linking
             },
           },
         }
@@ -98,7 +131,21 @@ export default function SignupPage() {
         return
       }
 
-      // 3. Mark invite as used (will be done by trigger/function on server)
+      // 5. If this was an athlete invite, link the athlete to the new user
+      if (invite.athlete_id && authData.user) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any)
+          .from('athletes')
+          .update({
+            user_id: authData.user.id,
+            invite_code: null,
+            invite_expires_at: null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', invite.athlete_id)
+      }
+
+      // 6. Mark invite as used (will be done by trigger/function on server)
       // The profile will be created by a database trigger
 
       toast({
