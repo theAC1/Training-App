@@ -65,23 +65,78 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    // Check if user is trainer
+    // Check user role
     const { data: profile } = (await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()) as { data: { role: string } | null }
 
-    if (profile?.role !== 'trainer') {
-      return NextResponse.json(
-        { error: 'Nur Trainer können Sessions bearbeiten' },
-        { status: 403 }
-      )
+    const body = await request.json()
+    const isTrainer = profile?.role === 'trainer'
+
+    // Athletes can only update started_at and completed_at
+    if (!isTrainer) {
+      // Check if athlete is updating their own session
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: sessionCheck } = await (supabase as any)
+        .from('sessions')
+        .select('id, mesocycles!inner(athlete_id)')
+        .eq('id', id)
+        .single()
+
+      const mesoData = sessionCheck?.mesocycles
+      if (!sessionCheck || mesoData?.athlete_id !== user.id) {
+        // Also check athletes table
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: athleteCheck } = await (supabase as any)
+          .from('athletes')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('id', mesoData?.athlete_id)
+          .single()
+
+        if (!athleteCheck) {
+          return NextResponse.json(
+            { error: 'Keine Berechtigung für diese Session' },
+            { status: 403 }
+          )
+        }
+      }
+
+      // Only allow started_at and completed_at updates for athletes
+      const allowedFields = ['started_at', 'completed_at']
+      const filteredBody: Record<string, unknown> = {}
+      for (const field of allowedFields) {
+        if (field in body) {
+          filteredBody[field] = body[field]
+        }
+      }
+
+      if (Object.keys(filteredBody).length === 0) {
+        return NextResponse.json(
+          { error: 'Keine erlaubten Felder zum Aktualisieren' },
+          { status: 400 }
+        )
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: session, error } = await (supabase
+        .from('sessions') as any)
+        .update(filteredBody)
+        .eq('id', id)
+        .select('*')
+        .single()
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 })
+      }
+
+      return NextResponse.json(session)
     }
 
-    const body = await request.json()
+    // Trainer can update all fields
     const validatedData = sessionUpdateSchema.parse({ ...body, id })
-
     const { id: _, ...updateData } = validatedData
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
