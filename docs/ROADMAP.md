@@ -9,7 +9,7 @@
 | 3 | Plan Builder | Meso, Sessions, Blocks | ✅ Completed |
 | 4 | Athlet Execution | Logging, Timer, Historie | ⚠️ Partial |
 | 5 | Offline PWA Sync | Service Worker, IndexedDB, Sync | ✅ Completed |
-| 6 | Athlet UI & Polish | Session-Ausführung, Finish MVP | 🔜 Next |
+| 6 | Athlet UI & Polish | Session-Ausführung, Finish MVP | 🏗️ In Progress |
 
 ---
 
@@ -169,30 +169,31 @@
 
 ---
 
-## Milestone 6: Athlet UI & Polish 🔜 NEXT
+## Milestone 6: Athlet UI & Polish 🏗️ IN PROGRESS
 
 **Ziel:** MVP-Fertigstellung mit funktionierender Athleten-Session-Ausführung.
 
-### Phase 6.1: Session-Ausführung (Priorität 1 - Kritisch)
+### Phase 6.1: Session-Ausführung ✅ DONE
 
-- [ ] `/session/[id]` Route für aktive Session
-- [ ] Session-Header mit Fortschrittsanzeige
-- [ ] Block-für-Block Navigation
-- [ ] Übungs-Card mit:
+- [x] `/session/[id]` Route für aktive Session
+- [x] Session-Header mit Fortschrittsanzeige
+- [x] Block-für-Block Navigation
+- [x] Übungs-Card mit:
   - Übungsname und Bild
   - Prescription (Sets × Reps @ Gewicht)
   - RIR-Vorgabe
-- [ ] Set-Logger Inline-Formular:
+- [x] Set-Logger Inline-Formular:
   - Reps-Input (numpad-optimiert)
   - Gewicht-Input (vorbefüllt mit letztem Wert)
   - Pain-Flag Toggle
-  - Quick-Notes Feld
-- [ ] Set-Liste pro Übung (erledigt/ausstehend)
-- [ ] "Nächster Set" / "Nächste Übung" Navigation
-- [ ] Rest-Timer:
+  - ~~Quick-Notes Feld~~ (verschoben)
+- [x] Set-Liste pro Übung (erledigt/ausstehend)
+- [x] "Nächster Set" / "Nächste Übung" Navigation
+- [x] Rest-Timer:
   - Countdown basierend auf Prescription
-  - Start/Stop/Reset
+  - Pause/Skip/Add Time Controls
   - Vibration bei Ende (falls unterstützt)
+- [x] Offline-Status Anzeige
 
 ### Phase 6.2: Session-Management
 
@@ -269,6 +270,7 @@
 
 | Datum | Änderung |
 |-------|----------|
+| 2026-01-05 | **Milestone 6 Phase 6.1 Complete**: Session-Ausführungs-UI mit Set-Logger, Rest-Timer, Block-Navigation |
 | 2026-01-05 | ROADMAP aktualisiert: Milestone 1-3, 5 als complete markiert. Milestone 4 als partial. Neuer Milestone 6 Fokus auf Athlet-UI. |
 | 2026-01-05 | Athleten-System neu designed (separate athletes Tabelle) |
 | 2026-01-05 | Google OAuth hinzugefügt |
