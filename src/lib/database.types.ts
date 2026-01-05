@@ -13,6 +13,44 @@ export type MesocycleStatus = 'draft' | 'active' | 'completed'
 export interface Database {
   public: {
     Tables: {
+      athletes: {
+        Row: {
+          id: string
+          trainer_id: string
+          name: string
+          email: string | null
+          notes: string | null
+          user_id: string | null
+          invite_code: string | null
+          invite_expires_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          trainer_id: string
+          name: string
+          email?: string | null
+          notes?: string | null
+          user_id?: string | null
+          invite_code?: string | null
+          invite_expires_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          trainer_id?: string
+          name?: string
+          email?: string | null
+          notes?: string | null
+          user_id?: string | null
+          invite_code?: string | null
+          invite_expires_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
       profiles: {
         Row: {
           id: string
