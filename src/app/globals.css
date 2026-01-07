@@ -164,3 +164,92 @@ html {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Mobile Touch Optimizations */
+
+/* Remove tap highlight on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Active state for touch feedback */
+button:active,
+[role='button']:active,
+a:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+/* Prevent text selection on interactive elements */
+button,
+[role='button'] {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Smooth momentum scrolling on iOS */
+.scroll-smooth {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent overscroll/bounce on specific containers */
+.no-overscroll {
+  overscroll-behavior: contain;
+}
+
+/* Ensure cards have proper touch target spacing */
+.touch-card {
+  padding: 16px;
+  margin-bottom: 8px;
+}
+
+/* Large touch-friendly input fields */
+.touch-input {
+  min-height: 48px;
+  padding: 12px 16px;
+  font-size: 16px;
+}
+
+/* Prevent double-tap zoom on buttons */
+button,
+[role='button'] {
+  touch-action: manipulation;
+}
+
+/* PWA standalone mode adjustments */
+@media (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Fixed bottom navigation safe area */
+  .fixed-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+}
+
+/* Improve contrast for outdoor visibility */
+@media (prefers-contrast: more) {
+  :root {
+    --foreground: 0 0% 0%;
+    --muted-foreground: 0 0% 30%;
+  }
+
+  .dark {
+    --foreground: 0 0% 100%;
+    --muted-foreground: 0 0% 75%;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

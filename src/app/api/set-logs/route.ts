@@ -163,6 +163,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const plannedExerciseId = searchParams.get('planned_exercise_id')
+    const exerciseId = searchParams.get('exercise_id')
     const athleteId = searchParams.get('athlete_id')
     const limit = parseInt(searchParams.get('limit') || '50', 10)
     const offset = parseInt(searchParams.get('offset') || '0', 10)
@@ -185,13 +186,27 @@ export async function GET(request: NextRequest) {
       query = query.eq('planned_exercise_id', plannedExerciseId)
     }
 
+    // Filter by exercise_id through the planned_exercises relation
+    if (exerciseId) {
+      query = query.eq('planned_exercises.exercise_id', exerciseId)
+    }
+
     const { data: logs, error } = await query
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json(logs)
+    // If filtering by exercise_id, filter out nulls from the join
+    let filteredLogs = logs || []
+    if (exerciseId) {
+      filteredLogs = filteredLogs.filter(
+        (log: { planned_exercises: { exercise_id: string } | null }) =>
+          log.planned_exercises?.exercise_id === exerciseId
+      )
+    }
+
+    return NextResponse.json(filteredLogs)
   } catch {
     return NextResponse.json(
       { error: 'Interner Serverfehler' },

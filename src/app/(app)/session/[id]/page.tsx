@@ -21,8 +21,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Pause,
-  RotateCcw,
   WifiOff,
+  Trophy,
+  Clock,
+  BarChart3,
+  History,
+  X,
+  Home,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -79,6 +84,23 @@ interface SetLog {
   clientUuid: string
 }
 
+interface HistoricalLog {
+  id: string
+  set_number: number
+  reps_completed: number
+  weight_used: number | null
+  logged_at: string
+}
+
+interface SessionSummary {
+  duration: number // in seconds
+  totalSets: number
+  totalReps: number
+  totalVolume: number // kg
+  exercisesCompleted: number
+  painFlags: number
+}
+
 export default function SessionExecutionPage() {
   const params = useParams()
   const router = useRouter()
@@ -93,6 +115,9 @@ export default function SessionExecutionPage() {
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0)
   const [completedSets, setCompletedSets] = useState<Map<string, SetLog[]>>(new Map())
 
+  // Historical logs per exercise
+  const [exerciseHistory, setExerciseHistory] = useState<Map<string, HistoricalLog[]>>(new Map())
+
   // Set input state
   const [repsInput, setRepsInput] = useState('')
   const [weightInput, setWeightInput] = useState('')
@@ -104,6 +129,14 @@ export default function SessionExecutionPage() {
   const [isResting, setIsResting] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Session summary state
+  const [showSummary, setShowSummary] = useState(false)
+  const [sessionSummary, setSessionSummary] = useState<SessionSummary | null>(null)
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null)
+
+  // Show history panel
+  const [showHistory, setShowHistory] = useState(false)
 
   // Fetch session
   useEffect(() => {
@@ -117,6 +150,9 @@ export default function SessionExecutionPage() {
           // If session not started, auto-start it
           if (!data.started_at) {
             startSession()
+            setSessionStartTime(new Date())
+          } else {
+            setSessionStartTime(new Date(data.started_at))
           }
         } else {
           toast({
@@ -139,6 +175,36 @@ export default function SessionExecutionPage() {
 
     fetchSession()
   }, [sessionId, router, toast])
+
+  // Fetch historical logs for current exercise
+  useEffect(() => {
+    const fetchHistory = async () => {
+      const currentExercise = getCurrentExercise()
+      if (!currentExercise || !session) return
+
+      const exerciseId = currentExercise.exercise_id
+      if (exerciseHistory.has(exerciseId)) return // Already loaded
+
+      try {
+        // Fetch recent logs for this exercise from other sessions
+        const res = await fetch(`/api/set-logs?exercise_id=${exerciseId}&limit=10`)
+        if (res.ok) {
+          const data = await res.json()
+          setExerciseHistory((prev) => {
+            const newMap = new Map(prev)
+            newMap.set(exerciseId, data)
+            return newMap
+          })
+        }
+      } catch {
+        console.error('Failed to fetch exercise history')
+      }
+    }
+
+    if (session) {
+      fetchHistory()
+    }
+  }, [session, currentBlockIndex, currentExerciseIndex])
 
   // Timer effect
   useEffect(() => {
@@ -178,28 +244,59 @@ export default function SessionExecutionPage() {
     }
   }
 
+  // Calculate session summary
+  const calculateSummary = (): SessionSummary => {
+    let totalSets = 0
+    let totalReps = 0
+    let totalVolume = 0
+    let exercisesCompleted = 0
+    let painFlags = 0
+
+    completedSets.forEach((logs, exerciseId) => {
+      if (logs.length > 0) {
+        exercisesCompleted++
+      }
+      logs.forEach((log) => {
+        totalSets++
+        totalReps += log.repsCompleted
+        if (log.weightUsed) {
+          totalVolume += log.repsCompleted * log.weightUsed
+        }
+        if (log.painFlag) {
+          painFlags++
+        }
+      })
+    })
+
+    const duration = sessionStartTime
+      ? Math.floor((new Date().getTime() - sessionStartTime.getTime()) / 1000)
+      : 0
+
+    return {
+      duration,
+      totalSets,
+      totalReps,
+      totalVolume,
+      exercisesCompleted,
+      painFlags,
+    }
+  }
+
   // Complete session
   const completeSession = async () => {
+    // Calculate and show summary first
+    const summary = calculateSummary()
+    setSessionSummary(summary)
+    setShowSummary(true)
+
     try {
-      const res = await fetch(`/api/sessions/${sessionId}`, {
+      await fetch(`/api/sessions/${sessionId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ completed_at: new Date().toISOString() }),
       })
-
-      if (res.ok) {
-        toast({
-          title: 'Training abgeschlossen!',
-          description: 'Deine Session wurde erfolgreich gespeichert.',
-        })
-        router.push('/dashboard')
-      }
     } catch {
-      toast({
-        variant: 'destructive',
-        title: 'Fehler',
-        description: 'Konnte Session nicht abschließen',
-      })
+      console.error('Failed to mark session as completed')
     }
   }
 
@@ -333,6 +430,15 @@ export default function SessionExecutionPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  const formatDuration = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600)
+    const mins = Math.floor((seconds % 3600) / 60)
+    if (hours > 0) {
+      return `${hours}h ${mins}min`
+    }
+    return `${mins} Minuten`
+  }
+
   // Calculate progress
   const calculateProgress = (): { current: number; total: number } => {
     if (!session?.session_blocks) return { current: 0, total: 0 }
@@ -340,8 +446,8 @@ export default function SessionExecutionPage() {
     let total = 0
     let current = 0
 
-    session.session_blocks.forEach((block, blockIdx) => {
-      block.planned_exercises.forEach((ex, exIdx) => {
+    session.session_blocks.forEach((block) => {
+      block.planned_exercises.forEach((ex) => {
         const targetSets = ex.sets_target
         total += targetSets
 
@@ -377,6 +483,93 @@ export default function SessionExecutionPage() {
     return null
   }
 
+  // Session Summary Screen
+  if (showSummary && sessionSummary) {
+    return (
+      <>
+        <Header title="Training abgeschlossen" />
+        <div className="space-y-6 p-4">
+          {/* Success Animation */}
+          <div className="flex flex-col items-center py-8">
+            <div className="mb-4 rounded-full bg-green-100 p-6">
+              <Trophy className="h-12 w-12 text-green-600" />
+            </div>
+            <h2 className="text-2xl font-bold">Super gemacht!</h2>
+            <p className="text-muted-foreground">
+              {session.name || `Woche ${session.week_number}`} abgeschlossen
+            </p>
+          </div>
+
+          {/* Summary Stats */}
+          <div className="grid grid-cols-2 gap-4">
+            <Card>
+              <CardContent className="flex flex-col items-center p-4">
+                <Clock className="mb-2 h-6 w-6 text-primary" />
+                <p className="text-2xl font-bold">{formatDuration(sessionSummary.duration)}</p>
+                <p className="text-sm text-muted-foreground">Dauer</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex flex-col items-center p-4">
+                <CheckCircle2 className="mb-2 h-6 w-6 text-green-600" />
+                <p className="text-2xl font-bold">{sessionSummary.totalSets}</p>
+                <p className="text-sm text-muted-foreground">Sätze</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex flex-col items-center p-4">
+                <BarChart3 className="mb-2 h-6 w-6 text-blue-600" />
+                <p className="text-2xl font-bold">{sessionSummary.totalReps}</p>
+                <p className="text-sm text-muted-foreground">Wiederholungen</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex flex-col items-center p-4">
+                <Dumbbell className="mb-2 h-6 w-6 text-purple-600" />
+                <p className="text-2xl font-bold">
+                  {sessionSummary.totalVolume > 1000
+                    ? `${(sessionSummary.totalVolume / 1000).toFixed(1)}t`
+                    : `${sessionSummary.totalVolume.toFixed(0)}kg`}
+                </p>
+                <p className="text-sm text-muted-foreground">Volumen</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Additional Info */}
+          <Card>
+            <CardContent className="p-4 space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Übungen</span>
+                <span className="font-medium">{sessionSummary.exercisesCompleted}</span>
+              </div>
+              {sessionSummary.painFlags > 0 && (
+                <div className="flex justify-between text-yellow-600">
+                  <span className="flex items-center gap-1">
+                    <AlertTriangle className="h-4 w-4" />
+                    Schmerz-Markierungen
+                  </span>
+                  <span className="font-medium">{sessionSummary.painFlags}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Actions */}
+          <div className="space-y-2">
+            <Button className="w-full" onClick={() => router.push('/dashboard')}>
+              <Home className="mr-2 h-4 w-4" />
+              Zum Dashboard
+            </Button>
+            <Button variant="outline" className="w-full" onClick={() => router.push('/session')}>
+              Nächste Session
+            </Button>
+          </div>
+        </div>
+      </>
+    )
+  }
+
   const currentExercise = getCurrentExercise()
   const currentBlock = getCurrentBlock()
   const exerciseLogs = currentExercise ? (completedSets.get(currentExercise.id) || []) : []
@@ -385,6 +578,11 @@ export default function SessionExecutionPage() {
   const isLastExercise = currentBlockIndex === session.session_blocks.length - 1 &&
     currentExerciseIndex === (currentBlock?.planned_exercises.length || 1) - 1
   const allSetsComplete = currentExercise && exerciseLogs.length >= currentExercise.sets_target
+
+  // Get history for current exercise
+  const currentExerciseHistory = currentExercise
+    ? exerciseHistory.get(currentExercise.exercise_id) || []
+    : []
 
   return (
     <>
@@ -398,12 +596,24 @@ export default function SessionExecutionPage() {
           </Button>
         }
         rightAction={
-          !isOnline && (
-            <div className="flex items-center gap-1 text-yellow-600">
-              <WifiOff className="h-4 w-4" />
-              <span className="text-xs">Offline</span>
-            </div>
-          )
+          <div className="flex items-center gap-1">
+            {currentExerciseHistory.length > 0 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowHistory(!showHistory)}
+                className={showHistory ? 'bg-muted' : ''}
+              >
+                <History className="h-5 w-5" />
+              </Button>
+            )}
+            {!isOnline && (
+              <div className="flex items-center gap-1 text-yellow-600">
+                <WifiOff className="h-4 w-4" />
+                <span className="text-xs">Offline</span>
+              </div>
+            )}
+          </div>
         }
       />
 
@@ -421,6 +631,38 @@ export default function SessionExecutionPage() {
             />
           </div>
         </div>
+
+        {/* History Panel */}
+        {showHistory && currentExerciseHistory.length > 0 && (
+          <Card className="border-blue-200 bg-blue-50/50">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <History className="h-4 w-4" />
+                  Letzte Logs
+                </CardTitle>
+                <Button variant="ghost" size="icon" onClick={() => setShowHistory(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1 text-sm">
+                {currentExerciseHistory.slice(0, 5).map((log, idx) => (
+                  <div key={log.id || idx} className="flex justify-between text-muted-foreground">
+                    <span>
+                      {log.reps_completed} Wdh
+                      {log.weight_used ? ` @ ${log.weight_used}kg` : ''}
+                    </span>
+                    <span className="text-xs">
+                      {new Date(log.logged_at).toLocaleDateString('de-DE')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Rest Timer Overlay */}
         {isResting && (
@@ -550,7 +792,7 @@ export default function SessionExecutionPage() {
                         placeholder={currentExercise.reps_target}
                         value={repsInput}
                         onChange={(e) => setRepsInput(e.target.value)}
-                        className="text-lg"
+                        className="text-lg h-12"
                       />
                     </div>
                     <div className="space-y-1">
@@ -561,7 +803,7 @@ export default function SessionExecutionPage() {
                         placeholder={currentExercise.weight_prescribed?.toString() || '-'}
                         value={weightInput}
                         onChange={(e) => setWeightInput(e.target.value)}
-                        className="text-lg"
+                        className="text-lg h-12"
                       />
                     </div>
                   </div>
@@ -580,14 +822,14 @@ export default function SessionExecutionPage() {
                     </label>
                   </div>
                   <Button
-                    className="w-full"
+                    className="w-full h-12 text-base"
                     onClick={handleLogSet}
                     disabled={isLoggingSet || !repsInput}
                   >
                     {isLoggingSet ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     ) : (
-                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      <CheckCircle2 className="mr-2 h-5 w-5" />
                     )}
                     Satz speichern
                   </Button>
