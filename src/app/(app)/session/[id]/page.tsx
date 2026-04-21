@@ -193,7 +193,7 @@ export default function SessionExecutionPage() {
           title: 'Training abgeschlossen!',
           description: 'Deine Session wurde erfolgreich gespeichert.',
         })
-        router.push('/dashboard')
+        router.push(`/session/${sessionId}/summary`)
       }
     } catch {
       toast({

@@ -195,14 +195,15 @@
   - Vibration bei Ende (falls unterstützt)
 - [x] Offline-Status Anzeige
 
-### Phase 6.2: Session-Management
+### Phase 6.2: Session-Management ✅ DONE
 
-- [ ] Session starten (started_at setzen)
-- [ ] Session abschließen (completed_at setzen)
-- [ ] Zusammenfassung nach Session:
+- [x] Session starten (started_at setzen) — auto beim Öffnen
+- [x] Session abschließen (completed_at setzen) — „Training beenden"-Button
+- [x] Zusammenfassung nach Session (`/session/[id]/summary`):
   - Gesamtvolumen
   - Dauer
-  - Abgeschlossene Sets
+  - Abgeschlossene Sets vs. Ziel
+  - Pro-Übung Breakdown mit Schmerz-Flags
 
 ### Phase 6.3: Historie & Feedback
 
@@ -270,6 +271,7 @@
 
 | Datum | Änderung |
 |-------|----------|
+| 2026-04-21 | **Milestone 6 Phase 6.2 Complete**: Session-Summary-Page (`/session/[id]/summary`) mit Volumen, Dauer, Sätze pro Übung, Pain-Flag-Übersicht |
 | 2026-01-05 | **Milestone 6 Phase 6.1 Complete**: Session-Ausführungs-UI mit Set-Logger, Rest-Timer, Block-Navigation |
 | 2026-01-05 | ROADMAP aktualisiert: Milestone 1-3, 5 als complete markiert. Milestone 4 als partial. Neuer Milestone 6 Fokus auf Athlet-UI. |
 | 2026-01-05 | Athleten-System neu designed (separate athletes Tabelle) |
