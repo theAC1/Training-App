@@ -51,18 +51,22 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  const pathname = request.nextUrl.pathname
   const isAuthRoute =
-    request.nextUrl.pathname.startsWith('/login') ||
-    request.nextUrl.pathname.startsWith('/signup')
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/forgot-password')
+  const isResetPassword = pathname.startsWith('/reset-password')
 
-  // Redirect unauthenticated users to login
-  if (!user && !isAuthRoute && request.nextUrl.pathname !== '/') {
+  // Redirect unauthenticated users to login (except auth/reset routes)
+  if (!user && !isAuthRoute && !isResetPassword && pathname !== '/') {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
   // Redirect authenticated users away from auth pages
+  // (but NOT from /reset-password — recovery session lands there)
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
